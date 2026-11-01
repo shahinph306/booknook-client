@@ -46,7 +46,7 @@ const categories = [
 const TopCategories = () => {
   return (
     <section className="py-16 px-4 bg-amber-50">
-      <div className="max-w-350 mx-auto text-center">
+      <div className="max-w-350 mx-auto text-center container">
         {/* Heading */}
         <h2 className="text-3xl font-serif text-gray-900 mb-3">Top Categories</h2>
         <p className="text-gray-500 mb-10">Pick a shelf and start reading.</p>
