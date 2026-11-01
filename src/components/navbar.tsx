@@ -93,7 +93,7 @@ const NavbarPage = () => {
             <nav className="flex flex-col gap-1 mb-2">
               {[
                 { label: "Home", href: "/" },
-                { label: "All Books", href: "/books" },
+                { label: "All Books", href: "/all-books" },
                 { label: "Add Book", href: "/add-book" },
                 { label: "My Books", href: "/my-books" },
                 { label: "My Borrows", href: "/my-borrows" },

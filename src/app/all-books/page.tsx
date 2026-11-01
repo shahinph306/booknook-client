@@ -44,7 +44,7 @@ const AllBooksContent = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#f8f5ea] py-12 px-4">
+        <div className="min-h-screen bg-[#f8f5ea] py-12 px-4 mx-auto container">
             <div className="max-w-7xl mx-auto">
                 {/* Page Heading */}
                 <div className="text-center mb-10">
@@ -66,7 +66,7 @@ const AllBooksContent = () => {
                         }, i: number) => (
                             <div
                                 key={i}
-                                className="group bg-white rounded-sm shadow-sm overflow-hidden border border-black-100 
+                                className="group bg-white rounded-xl shadow-sm overflow-hidden border border-black-100 
                            transition-all duration-300 ease-out
                            hover:shadow-lg hover:-translate-y-2 cursor-pointer"
                             >
@@ -101,7 +101,7 @@ const AllBooksContent = () => {
                                     </p>
 
                                     <Link
-                                        href={`/book/${book._id || i}`}
+                                        href={`/all-books/${book._id || i}`}
                                         className="block w-full py-2 bg-[#2f6b52] hover:bg-[#275c46] text-white text-center text-sm font-medium rounded transition-colors"
                                     >
                                         View Details
