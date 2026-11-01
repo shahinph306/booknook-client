@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 const slides = [
   {
     id: 1,
-    image: '/images/banner-1.jpg',
+    image: '/images/bannerImg-1.jpg',
     label: 'BOOKNOOK',
     title: 'Share the books on your shelf',
     description: 'Add the books you have finished. Let other readers enjoy them too.',
@@ -20,7 +20,7 @@ const slides = [
   },
   {
     id: 2,
-    image: '/images/banner-3.jpg',
+    image: '/images/bannerImg-3.jpg',
     label: 'BOOKNOOK',
     title: 'Borrow, read, return. Repeat.',
     description: 'Seven days for every book. Return it with one click when you are done.',
@@ -29,7 +29,7 @@ const slides = [
   },
   {
     id: 3,
-    image: '/images/banner-2.jpg',
+    image: '/images/bannerImg-2.jpg',
     label: 'BOOKNOOK',
     title: 'Your neighbourhood library, online',
     description: 'Find a book that someone nearby already loved, and borrow it for a week.',

@@ -247,7 +247,7 @@ const NewArrivalBooks = () => {
                         books.map((book) => (
                             <div
                                 key={book._id}
-                                className="group bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100
+                                className="group bg-white rounded-xl shadow-sm overflow-hidden border border-black-100
     transition-all duration-300 ease-out
     hover:shadow-lg hover:-translate-y-1 cursor-pointer"
                             >
@@ -266,11 +266,11 @@ const NewArrivalBooks = () => {
                                 </div>
 
                                 {/* Card Information */}
-                                <div className="p-4 flex flex-col min-h-[192px]">
+                                <div className="p-4 flex flex-col min-h-48">
 
                                     {/* Category */}
                                     <div className="mb-3">
-                                        <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full capitalize">
+                                        <span className="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full capitalize">
                                             {book.category || 'General'}
                                         </span>
                                     </div>
@@ -317,8 +317,8 @@ const NewArrivalBooks = () => {
                 <div className="text-center mt-10">
                     <Link
                         href="/all-books"
-                        className="px-6 py-2 border border-gray-300 text-gray-700 text-sm rounded
-            hover:bg-gray-100 transition-colors"
+                        className="px-6 py-2 border border-black-300 text-gray-700 text-sm rounded
+            hover:bg-green-400 transition-colors"
                     >
                         View All Books
                     </Link>
