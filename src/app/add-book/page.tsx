@@ -376,7 +376,7 @@ const AddBookPage = () => {
               required
             />
             <p className="text-xs text-gray-400 mt-1">
-              বইয়ের কভার ছবির লিঙ্ক দিন — যেমন: https://example.com/book.jpg
+              Give the link of the book cover image — like: https://example.com/book.jpg
             </p>
           </div>
 

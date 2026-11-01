@@ -16,7 +16,7 @@ const slides = [
     title: 'Share the books on your shelf',
     description: 'Add the books you have finished. Let other readers enjoy them too.',
     buttonText: 'Browse Books',
-    buttonLink: '/books',
+    buttonLink: '/all-books',
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ const slides = [
     title: 'Borrow, read, return. Repeat.',
     description: 'Seven days for every book. Return it with one click when you are done.',
     buttonText: 'Browse Books',
-    buttonLink: '/books',
+    buttonLink: '/all-books',
   },
   {
     id: 3,
@@ -34,7 +34,7 @@ const slides = [
     title: 'Your neighbourhood library, online',
     description: 'Find a book that someone nearby already loved, and borrow it for a week.',
     buttonText: 'Browse Books',
-    buttonLink: '/books',
+    buttonLink: '/all-books',
   },
 ];
 
