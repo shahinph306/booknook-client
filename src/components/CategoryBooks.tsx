@@ -1,11 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/purity */
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import BookCard, { Book } from './BookCard';
 import Link from 'next/link';
+import Image from 'next/image';
+
+type Book = {
+  _id?: string;
+  bookTitle?: string;
+  authorName?: string;
+  category?: string;
+  shortDescription?: string;
+  totalCopies?: number;
+  userName?: string;
+  userEmail?: string;
+  bookImageUrl?: string;
+  bookImage?: string;
+};
 
 type BooksResponse = {
   success: boolean;
@@ -22,18 +36,14 @@ const CategoryBooks = () => {
   const [error, setError] = useState<string | null>(null);
 
   // ✅ ছবির URL ঠিক করার ফাংশন — প্রতিটি বইয়ের জন্য আলাদাভাবে
-  const getSafeImageUrl = (book: Book): string => {
-    // bookImageUrl বা bookImage যেকোনো একটি ব্যবহার
+  const getImageUrl = (book: Book): string => {
     const url = book.bookImageUrl || (book as any).bookImage || '';
-    
-    // যদি বৈধ লিঙ্ক হয় — ব্যবহার করুন
+
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
-    // না হলে ডিফল্ট ছবি — প্রতিটি বইয়ের জন্য আলাদা করার জন্য বইয়ের নাম যোগ করুন
+
     const fallbackBase = 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
-    // বইয়ের নাম বা id যোগ করলে ক্যাশ না হয়ে আলাদা আলাদা দেখাবে
     return `${fallbackBase}?t=${encodeURIComponent(book.bookTitle || 'book')}-${book._id || Date.now()}`;
   };
 
@@ -122,14 +132,54 @@ const CategoryBooks = () => {
             </div>
           ) : (
             books.map((book) => (
-              <BookCard 
-                key={book._id} 
-                book={{
-                  ...book,
-                  // ✅ প্রতিটি বইয়ের জন্য নিজস্ব ছবি URL পাঠান
-                  bookImageUrl: getSafeImageUrl(book),
-                }} 
-              />
+              <div
+                key={book._id}
+                className="group bg-white rounded-xl shadow-sm overflow-hidden border border-black/50
+                          transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1"
+              >
+                <div className="relative w-full h-56 bg-gray-100 overflow-hidden flex items-center justify-center">
+                  <Image
+                    src={getImageUrl(book)}
+                    alt={book.bookTitle || 'Book cover'}
+                    fill
+                    className="object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    unoptimized
+                  />
+                </div>
+
+                <div className="p-4 flex flex-col min-h-48">
+                  <div className="mb-3">
+                    <span className="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full capitalize">
+                      {book.category || 'General'}
+                    </span>
+                  </div>
+
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {book.bookTitle || 'Unknown Title'}
+                  </h3>
+
+                  <p className="text-gray-500 text-sm mb-3">
+                    By {book.authorName || 'Unknown Author'}
+                  </p>
+
+                  <p className="text-gray-600 text-sm leading-5 mb-3 line-clamp-2">
+                    {book.shortDescription || 'No description available.'}
+                  </p>
+
+                  <div className="flex items-center justify-between gap-2 mt-auto">
+                    <span className="text-xs text-gray-500">
+                      Copies: {book.totalCopies}
+                    </span>
+                    <Link
+                      href={`/all-books/${book._id}`}
+                      className="px-4 py-2 bg-[#2f6b52] hover:bg-[#275c46] text-white text-xs font-semibold rounded transition-colors whitespace-nowrap"
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              </div>
             ))
           )}
         </div>
