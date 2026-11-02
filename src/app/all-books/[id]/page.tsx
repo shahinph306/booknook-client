@@ -125,14 +125,12 @@
 
 
 
-
 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-// Define Book type
 type Book = {
   _id?: string;
   bookTitle?: string;
@@ -145,7 +143,6 @@ type Book = {
   bookImageUrl?: string;
 };
 
-// Define Params type
 type BookDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
@@ -166,7 +163,16 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
 
         if (!res.ok) throw new Error('Failed to fetch book');
         const data = await res.json();
-        setBook(data);
+        console.log('📦 Book Detail API:', data);
+
+        // ✅ মূল ফিক্স — data.book থেকে বই নিচ্ছি
+        if (data?.book) {
+          setBook(data.book);
+        } else if (data) {
+          setBook(data);
+        } else {
+          setBook(null);
+        }
       } catch (err) {
         console.error('Error:', err);
       } finally {
@@ -177,14 +183,13 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
     fetchBook();
   }, [params]);
 
-  // Image URL with fallback
+  // ✅ ইমেজ URL — ফলব্যাক ঠিক করা
   const getImageUrl = (): string => {
     if (!book) return '';
     if (book.bookImageUrl && book.bookImageUrl.startsWith('http')) {
       return book.bookImageUrl;
     }
-    const title = encodeURIComponent(book.bookTitle || 'book');
-    return `https://covers.openlibrary.org/b/title/${title}-L.jpg`;
+    return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
   };
 
   if (loading) {
@@ -212,12 +217,12 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Book Cover Image */}
           <div className="md:col-span-1">
-            <div className="relative w-full h-125 rounded overflow-hidden shadow-lg">
+            <div className="relative w-full h-[320px] rounded overflow-hidden shadow-lg bg-gray-100">
               <Image
                 src={getImageUrl()}
                 alt={book.bookTitle || 'Book cover'}
                 fill
-                className="object-cover"
+                className="object-contain p-3"
                 sizes="(max-width: 768px) 100vw, 33vw"
                 unoptimized
               />
@@ -226,7 +231,7 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
 
           {/* Book Info */}
           <div className="md:col-span-2 flex flex-col justify-center">
-            <span className="inline-block px-3 py-1 bg-gray-100 border border-red-300 text-red-600 text-xs rounded mb-4 capitalize w-fit">
+            <span className="inline-block px-3 py-1 bg-red-50 text-red-600 text-xs rounded mb-4 capitalize w-fit">
               {book.category || 'General'}
             </span>
 
@@ -241,16 +246,16 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
             </p>
 
             {/* Info Card */}
-            <div className="border border-black-200 rounded p-4 mb-6">
+            <div className="border border-gray-200 rounded p-4 mb-6 bg-white">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Added by</p>
-                  <p className="text-sm text-gray-700">{book.userName || 'Shahin Mahmud'}</p>
-                  <p className="text-xs text-gray-400">{book.userEmail || 'shahin.mahmud@example.com'}</p>
+                  <p className="text-sm font-medium text-gray-800">{book.userName || 'Unknown'}</p>
+                  <p className="text-xs text-gray-400 mt-1">{book.userEmail || ''}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Copies left</p>
-                  <p className="text-lg font-semibold text-gray-900">{book.totalCopies || 0}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Copies Left</p>
+                  <p className="text-lg font-semibold text-gray-900">{book.totalCopies ?? 0}</p>
                 </div>
               </div>
             </div>
@@ -261,15 +266,14 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
                 Borrow This Book
               </button>
               
-              {/* ← Back to all books — Colorful underline on hover */}
               <Link
                 href="/all-books"
                 className="relative px-1 py-1 text-gray-600 text-sm font-medium 
-                           after:absolute after:bottom-0 after:left-0 after:h-0.5 
-                           after:w-0 hover:after:w-full 
-                           after:bg-linear-to-r after:from-emerald-500 after:via-teal-500 after:to-green-500 
-                           after:transition-all after:duration-300 after:ease-out
-                           hover:text-gray-900 transition-colors"
+                          after:absolute after:bottom-0 after:left-0 after:h-0.5 
+                          after:w-0 hover:after:w-full 
+                          after:bg-emerald-500 
+                          after:transition-all after:duration-300 after:ease-out
+                          hover:text-gray-900 transition-colors"
               >
                 ← Back to all books
               </Link>

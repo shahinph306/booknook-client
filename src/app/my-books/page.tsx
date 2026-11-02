@@ -200,7 +200,7 @@ export default function MyBooksPage() {
                       <img
                         src={book.bookImageUrl}
                         alt={book.bookTitle}
-                        className="w-32 h-44 object-cover rounded shadow-sm flex-shrink-0"
+                        className="w-32 h-44 object-cover rounded shadow-sm shrink-0"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/128x176?text=No+Image';
                         }}
@@ -219,7 +219,7 @@ export default function MyBooksPage() {
                       <div className="flex gap-3 mt-4">
                         <button
                           onClick={() => startEdit(book)}
-                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded transition-colors"
+                          className="px-4 py-2 bg-green-400 hover:bg-green-600 text-black rounded transition-colors"
                         >
                           Edit
                         </button>
