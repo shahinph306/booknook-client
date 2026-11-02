@@ -356,13 +356,13 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [borrowLoading, setBorrowLoading] = useState(false);
-  const [isAlreadyBorrowed, setIsAlreadyBorrowed] = useState<boolean>(false); // ✅ নতুন
+  const [isAlreadyBorrowed, setIsAlreadyBorrowed] = useState<boolean>(false);
 
   const loggedUser = getLoggedInUser();
   const borrowerName = loggedUser.name;
   const borrowerEmail = loggedUser.email;
 
-  // ✅ বইটি আগে বুক করা হয়েছে কিনা চেক করুন
+  // ✅ নিজে আগে বুক করেছেন কিনা চেক
   useEffect(() => {
     if (!book?._id) return;
 
@@ -373,6 +373,7 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
     setIsAlreadyBorrowed(already);
   }, [book?._id]);
 
+  // ✅ বইয়ের ডেটা লোড
   useEffect(() => {
     const fetchBook = async () => {
       try {
@@ -385,7 +386,6 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
 
         if (!res.ok) throw new Error('Failed to fetch book');
         const data = await res.json();
-        console.log('📦 Book Detail API:', data);
 
         if (data?.book) {
           setBook(data.book);
@@ -416,8 +416,25 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
     return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
   };
 
+  // ✅ বুক করার ফাংশন — কপি কমানোসহ
   const handleConfirmBorrow = async () => {
     if (!book?._id) return;
+    if ((book.totalCopies ?? 0) <= 0) {
+      toast.add({
+        type: 'error',
+        title: '❌ Not Available',
+        description: 'This book is currently out of stock.',
+      });
+      return;
+    }
+    if (isAlreadyBorrowed) {
+      toast.add({
+        type: 'error',
+        title: '❌ Already Borrowed',
+        description: 'You have already borrowed this book.',
+      });
+      return;
+    }
 
     setBorrowLoading(true);
 
@@ -437,25 +454,33 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
         returnBy,
       };
 
+      // ✅ localStorage-এ যোগ
       const existing = JSON.parse(localStorage.getItem('myBorrows') || '[]');
-      
-      // ডুপ্লিকেট বাদ দিন
       const filtered = existing.filter(
         (item: BorrowData) => item.bookId !== book._id
       );
-      
       localStorage.setItem(
         'myBorrows',
         JSON.stringify([borrowData, ...filtered])
       );
 
-      // ✅ বুক করার সাথে সাথে স্টেট আপডেট
+      // ✅ সার্ভারে কপি সংখ্যা কমানোর অনুরোধ
+      const updateRes = await fetch(`http://localhost:8000/decrement-copies/${book._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (updateRes.ok) {
+        // ✅ স্থানীয় স্টেটেও কপি কমান
+        setBook(prev => prev ? { ...prev, totalCopies: (prev.totalCopies ?? 1) - 1 } : null);
+      }
+
       setIsAlreadyBorrowed(true);
 
       toast.add({
         type: 'success',
         title: '✅ Book Borrowed Successfully!',
-        description: `"${book.bookTitle}" added to your borrows. Return by ${new Date(returnBy).toLocaleDateString()}.`,
+        description: `"${book.bookTitle}" added. Return by ${new Date(returnBy).toLocaleDateString()}.`,
       });
       
       setTimeout(() => {
@@ -492,6 +517,9 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
       </div>
     );
   }
+
+  const copiesLeft = book.totalCopies ?? 0;
+  const noCopiesLeft = copiesLeft <= 0;
 
   return (
     <div className="min-h-screen bg-[#f8f5ea] py-10 px-4">
@@ -541,24 +569,33 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Copies Left</p>
-                  <p className="text-lg font-semibold text-gray-900">{book.totalCopies ?? 0}</p>
+                  {/* ✅ কপি শেষ হলে বিশেষ বার্তা */}
+                  {noCopiesLeft ? (
+                    <p className="text-lg font-semibold text-red-500">This book has no copies left</p>
+                  ) : (
+                    <p className="text-lg font-semibold text-gray-900">{copiesLeft}</p>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-4 flex-wrap items-center">
-              {/* ✅ আগে বুক করলে বাটন নিষ্ক্রিয় হবে */}
+              {/* ✅ কপি নেই বা আগে বুক করলে বাটন নিষ্ক্রিয় */}
               <Button
                 onClick={() => setOpenDialog(true)}
-                disabled={isAlreadyBorrowed}
+                disabled={isAlreadyBorrowed || noCopiesLeft}
                 className={`px-6 ${
-                  isAlreadyBorrowed
+                  isAlreadyBorrowed || noCopiesLeft
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-[#2f6b52] hover:bg-[#275c46] text-white'
                 }`}
               >
-                {isAlreadyBorrowed ? '✅ Already Borrowed' : 'Borrow This Book'}
+                {noCopiesLeft
+                  ? '📕 Not Available'
+                  : isAlreadyBorrowed
+                    ? '✅ Already Borrowed'
+                    : 'Borrow This Book'}
               </Button>
 
               <Link

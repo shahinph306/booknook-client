@@ -220,11 +220,11 @@
 
 
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/toast'; // ✅ Toast import
 
 const getLoggedInUser = () => {
   return {
@@ -245,7 +245,6 @@ const AddBookPage = () => {
     userName: '',
     userEmail: '',
   });
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -266,7 +265,6 @@ const AddBookPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
     setIsLoading(true);
 
     try {
@@ -277,8 +275,15 @@ const AddBookPage = () => {
       });
 
       const data = await res.json();
+      
       if (data.success) {
-        setMessage('✅ Book added successfully! Redirecting...');
+        // ✅ সফল হলে টোস্ট
+        toast.add({
+          type: 'success',
+          title: '✅ Book Added Successfully!',
+          description: `"${formData.bookTitle}" has been added to your books.`,
+        });
+
         setFormData(prev => ({
           ...prev,
           bookTitle: '',
@@ -287,12 +292,23 @@ const AddBookPage = () => {
           shortDescription: '',
           totalCopies: 1,
         }));
+
         setTimeout(() => router.push('/my-books'), 1500);
       } else {
-        setMessage('❌ Error: ' + (data.error || 'Failed to add book'));
+        // ✅ সার্ভার থেকে ব্যর্থ হলে টোস্ট
+        toast.add({
+          type: 'error',
+          title: '❌ Failed to Add Book',
+          description: data.error || 'Something went wrong. Please try again.',
+        });
       }
     } catch (err) {
-      setMessage('❌ Server connection failed! Check if server is running.');
+      // ✅ নেটওয়ার্ক/সার্ভার না পেলে টোস্ট
+      toast.add({
+        type: 'error',
+        title: '❌ Server Connection Failed',
+        description: 'Check if your server is running at port 8000.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -305,12 +321,6 @@ const AddBookPage = () => {
           <h1 className="text-3xl font-serif text-gray-900 mb-2">Add a Book</h1>
           <p className="text-gray-500">Put a book from your shelf into the library.</p>
         </div>
-
-        {message && (
-          <p className={`text-center mb-4 font-medium ${message.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>
-            {message}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Book Title & Author */}
