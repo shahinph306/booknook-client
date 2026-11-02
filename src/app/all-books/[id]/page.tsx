@@ -125,11 +125,189 @@
 
 
 
+// 'use client';
+
+// import Image from 'next/image';
+// import Link from 'next/link';
+// import { useEffect, useState } from 'react';
+
+// type Book = {
+//   _id?: string;
+//   bookTitle?: string;
+//   authorName?: string;
+//   category?: string;
+//   shortDescription?: string;
+//   totalCopies?: number;
+//   userName?: string;
+//   userEmail?: string;
+//   bookImageUrl?: string;
+// };
+
+// type BookDetailsPageProps = {
+//   params: Promise<{ id: string }>;
+// };
+
+// const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
+//   const [book, setBook] = useState<Book | null>(null);
+//   const [loading, setLoading] = useState<boolean>(true);
+
+//   useEffect(() => {
+//     const fetchBook = async () => {
+//       try {
+//         const resolvedParams = await params;
+//         const bookId = resolvedParams.id;
+
+//         const res = await fetch(`http://localhost:8000/all-book/${bookId}`, {
+//           cache: 'no-store',
+//         });
+
+//         if (!res.ok) throw new Error('Failed to fetch book');
+//         const data = await res.json();
+//         console.log('📦 Book Detail API:', data);
+
+//         // ✅ মূল ফিক্স — data.book থেকে বই নিচ্ছি
+//         if (data?.book) {
+//           setBook(data.book);
+//         } else if (data) {
+//           setBook(data);
+//         } else {
+//           setBook(null);
+//         }
+//       } catch (err) {
+//         console.error('Error:', err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchBook();
+//   }, [params]);
+
+//   // ✅ ইমেজ URL — ফলব্যাক ঠিক করা
+//   const getImageUrl = (): string => {
+//     if (!book) return '';
+//     if (book.bookImageUrl && book.bookImageUrl.startsWith('http')) {
+//       return book.bookImageUrl;
+//     }
+//     return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen bg-[#f8f5ea] flex items-center justify-center mx-auto container">
+//         <div className="text-center">
+//           <div className="w-10 h-10 border-4 border-[#2f6b52] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+//           <p className="text-gray-600">Loading book details...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (!book) {
+//     return (
+//       <div className="min-h-screen bg-[#f8f5ea] flex items-center justify-center text-gray-600">
+//         Book not found
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-[#f8f5ea] py-10 px-4">
+//       <div className="max-w-5xl mx-auto">
+//         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+//           {/* Book Cover Image */}
+//           <div className="md:col-span-1">
+//             <div className="relative w-full h-[320px] rounded overflow-hidden shadow-lg bg-gray-100">
+//               <Image
+//                 src={getImageUrl()}
+//                 alt={book.bookTitle || 'Book cover'}
+//                 fill
+//                 className="object-contain p-3"
+//                 sizes="(max-width: 768px) 100vw, 33vw"
+//                 unoptimized
+//               />
+//             </div>
+//           </div>
+
+//           {/* Book Info */}
+//           <div className="md:col-span-2 flex flex-col justify-center">
+//             <span className="inline-block px-3 py-1 bg-red-50 text-red-600 text-xs rounded mb-4 capitalize w-fit">
+//               {book.category || 'General'}
+//             </span>
+
+//             <h1 className="text-3xl md:text-4xl font-serif text-gray-900 mb-2">
+//               {book.bookTitle || 'Unknown Title'}
+//             </h1>
+
+//             <p className="text-gray-500 mb-4">by {book.authorName || 'Unknown Author'}</p>
+
+//             <p className="text-gray-600 mb-8 leading-relaxed">
+//               {book.shortDescription || 'No description available.'}
+//             </p>
+
+//             {/* Info Card */}
+//             <div className="border border-gray-200 rounded p-4 mb-6 bg-white">
+//               <div className="grid grid-cols-2 gap-4">
+//                 <div>
+//                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Added by</p>
+//                   <p className="text-sm font-medium text-gray-800">{book.userName || 'Unknown'}</p>
+//                   <p className="text-xs text-gray-400 mt-1">{book.userEmail || ''}</p>
+//                 </div>
+//                 <div>
+//                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Copies Left</p>
+//                   <p className="text-lg font-semibold text-gray-900">{book.totalCopies ?? 0}</p>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Action Buttons */}
+//             <div className="flex gap-4 flex-wrap items-center">
+              
+              
+//               <Link
+//                 href={"/my-borrows"}
+//                 className="px-6 py-2 bg-[#2f6b52] hover:bg-[#275c46] text-white text-sm font-medium rounded transition-colors">
+//                 Borrow This Book
+//               </Link>
+              
+//               <Link
+//                 href="/all-books"
+//                 className="relative px-1 py-1 text-gray-600 text-sm font-medium 
+//                           after:absolute after:bottom-0 after:left-0 after:h-0.5 
+//                           after:w-0 hover:after:w-full 
+//                           after:bg-emerald-500 
+//                           after:transition-all after:duration-300 after:ease-out
+//                           hover:text-gray-900 transition-colors"
+//               >
+//                 ← Back to all books
+//               </Link>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default BookDetailsPage;
+
+
 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type Book = {
   _id?: string;
@@ -141,15 +319,41 @@ type Book = {
   userName?: string;
   userEmail?: string;
   bookImageUrl?: string;
+  bookImage?: string;
+};
+
+type BorrowData = {
+  bookId: string;
+  bookTitle: string;
+  authorName: string;
+  bookImageUrl: string;
+  borrowerName: string;
+  borrowerEmail: string;
+  borrowedAt: string;
+  returnBy: string;
 };
 
 type BookDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
 
+const getLoggedInUser = () => {
+  return {
+    name: 'Shahin Mahmud',
+    email: 'shahinph306@gmail.com',
+  };
+};
+
 const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [borrowLoading, setBorrowLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  
+  const loggedUser = getLoggedInUser();
+  const borrowerName = loggedUser.name;
+  const borrowerEmail = loggedUser.email;
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -165,7 +369,6 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
         const data = await res.json();
         console.log('📦 Book Detail API:', data);
 
-        // ✅ মূল ফিক্স — data.book থেকে বই নিচ্ছি
         if (data?.book) {
           setBook(data.book);
         } else if (data) {
@@ -183,13 +386,58 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
     fetchBook();
   }, [params]);
 
-  // ✅ ইমেজ URL — ফলব্যাক ঠিক করা
+  // ✅ ইমেজ URL ঠিক করা — বিভিন্ন ফিল্ড নাম সাপোর্ট + সঠিক ফলব্যাক
   const getImageUrl = (): string => {
-    if (!book) return '';
-    if (book.bookImageUrl && book.bookImageUrl.startsWith('http')) {
-      return book.bookImageUrl;
+    if (!book) return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
+    
+    // বিভিন্ন ফিল্ড নাম চেক করুন
+    const imgUrl = book.bookImageUrl || book.bookImage;
+    
+    if (imgUrl && imgUrl.startsWith('http')) {
+      return imgUrl;
     }
-    return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
+
+    // ✅ বইয়ের শিরোনাম দিয়ে স্বয়ংক্রিয়ভাবে সঠিক কভার খুঁজে বের করুন
+    const title = encodeURIComponent(book.bookTitle || 'book');
+    return `https://covers.openlibrary.org/b/title/${title}-L.jpg`;
+  };
+
+  const handleConfirmBorrow = async () => {
+    if (!book?._id) return;
+
+    setBorrowLoading(true);
+    setMessage('');
+
+    try {
+      const borrowedAt = new Date().toISOString();
+      const returnBy = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const borrowData: BorrowData = {
+        bookId: book._id,
+        bookTitle: book.bookTitle || 'Unknown Title',
+        authorName: book.authorName || 'Unknown Author',
+        bookImageUrl: getImageUrl(),
+        borrowerName,
+        borrowerEmail,
+        borrowedAt,
+        returnBy,
+      };
+
+      const existing = JSON.parse(localStorage.getItem('myBorrows') || '[]');
+      localStorage.setItem('myBorrows', JSON.stringify([borrowData, ...existing]));
+
+      setMessage('✅ Book borrowed successfully!');
+      
+      setTimeout(() => {
+        setOpenDialog(false);
+        window.location.href = '/my-borrows';
+      }, 1200);
+    } catch (err) {
+      setMessage('❌ Failed to borrow book');
+      console.error(err);
+    } finally {
+      setBorrowLoading(false);
+    }
   };
 
   if (loading) {
@@ -215,7 +463,7 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
     <div className="min-h-screen bg-[#f8f5ea] py-10 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Book Cover Image */}
+          {/* Book Cover */}
           <div className="md:col-span-1">
             <div className="relative w-full h-[320px] rounded overflow-hidden shadow-lg bg-gray-100">
               <Image
@@ -250,8 +498,12 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Added by</p>
-                  <p className="text-sm font-medium text-gray-800">{book.userName || 'Unknown'}</p>
-                  <p className="text-xs text-gray-400 mt-1">{book.userEmail || ''}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {book.userName || 'Shahin Mahmud'}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {book.userEmail || 'shahinph306@gmail.com'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Copies Left</p>
@@ -262,10 +514,13 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
 
             {/* Action Buttons */}
             <div className="flex gap-4 flex-wrap items-center">
-              <button className="px-6 py-2 bg-[#2f6b52] hover:bg-[#275c46] text-white text-sm font-medium rounded transition-colors">
+              <Button
+                onClick={() => setOpenDialog(true)}
+                className="bg-[#2f6b52] hover:bg-[#275c46] text-white px-6"
+              >
                 Borrow This Book
-              </button>
-              
+              </Button>
+
               <Link
                 href="/all-books"
                 className="relative px-1 py-1 text-gray-600 text-sm font-medium 
@@ -281,6 +536,69 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
           </div>
         </div>
       </div>
+
+      {/* Borrow Dialog Box */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-md bg-[#f8f5ea] border-amber-100">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl">
+              Borrow &quot;{book.bookTitle}&quot;
+            </DialogTitle>
+            <DialogDescription>
+              You can keep this book for 7 days.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="userName">User Name</Label>
+              <Input
+                id="userName"
+                value={borrowerName}
+                readOnly
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="userEmail">User Email</Label>
+              <Input
+                id="userEmail"
+                type="email"
+                value={borrowerEmail}
+                readOnly
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed"
+              />
+            </div>
+            
+            {message && (
+              <p className={`text-sm ${message.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>
+                {message}
+              </p>
+            )}
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setOpenDialog(false)}
+              disabled={borrowLoading}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmBorrow}
+              disabled={borrowLoading}
+              className="bg-[#2f6b52] hover:bg-[#275c46] text-white"
+            >
+              {borrowLoading ? 'Confirming...' : 'Confirm Borrow'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
