@@ -4,10 +4,10 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { toast } from '@/components/ui/toast'; // ✅ Toast import
+import { toast } from '@/components/ui/toast';
 
 type BorrowedBook = {
-  id?: string; // ✅ ইউনিক আইডি যোগ
+  id: string;
   bookId: string;
   bookTitle: string;
   authorName: string;
@@ -24,30 +24,50 @@ export default function MyBorrowsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem('myBorrows') || '[]');
-    
-    // ✅ ডুপ্লিকেট সরান + id নেই তৈরি করে দিন
-    const unique = Array.from(
-      new Map(data.map((item: BorrowedBook) => [item.bookId, item]))
-    ).map(([_, item]) => ({
-      ...item,
-      id: item.id || `${item.bookId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-    }));
+    try {
+      const raw = localStorage.getItem('myBorrows') || '[]';
+      const data = JSON.parse(raw) as Partial<BorrowedBook>[];
 
-    if (unique.length !== data.length) {
-      localStorage.setItem('myBorrows', JSON.stringify(unique));
+      // ✅ ডুপ্লিকেট সরান + id নিশ্চিত + টাইপ সঠিক
+      const bookMap = new Map<string, Partial<BorrowedBook>>();
+      data.forEach(item => {
+        if (item.bookId) {
+          bookMap.set(item.bookId, item);
+        }
+      });
+
+      const unique: BorrowedBook[] = Array.from(bookMap.values()).map(item => ({
+        bookId: item.bookId!,
+        bookTitle: item.bookTitle || 'Unknown Title',
+        authorName: item.authorName || 'Unknown Author',
+        bookImageUrl: item.bookImageUrl || '',
+        borrowerName: item.borrowerName || '',
+        borrowerEmail: item.borrowerEmail || '',
+        borrowedAt: item.borrowedAt || new Date().toISOString(),
+        returnBy: item.returnBy || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        returned: item.returned,
+        // ✅ সর্বদা ইউনিক id তৈরি
+        id: item.id || `${item.bookId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      }));
+
+      if (unique.length !== data.length) {
+        localStorage.setItem('myBorrows', JSON.stringify(unique));
+      }
+
+      setBorrows(unique);
+    } catch (err) {
+      console.error('Load borrows error:', err);
+      setBorrows([]);
+    } finally {
+      setLoading(false);
     }
-
-    setBorrows(unique);
-    setLoading(false);
   }, []);
 
   const handleReturn = (item: BorrowedBook) => {
-    const updated = borrows.filter(b => b.id !== item.id); // ✅ id দিয়ে ফিল্টার
+    const updated = borrows.filter(b => b.id !== item.id);
     localStorage.setItem('myBorrows', JSON.stringify(updated));
     setBorrows(updated);
 
-    // ✅ রিটার্ন করলে টোস্ট দেখান
     toast.add({
       type: 'success',
       title: '✅ Book Returned',
@@ -82,8 +102,8 @@ export default function MyBorrowsPage() {
           </p>
         ) : (
           <div className="space-y-4">
-            {/* ✅ key={item.id} — এরর আসবে না */}
             {borrows.map((item) => {
+              // ✅ এখানে 'item' পুরোপুরি টাইপড BorrowedBook
               const borrowedDate = new Date(item.borrowedAt).toLocaleDateString();
               const returnDate = new Date(item.returnBy).toLocaleDateString();
               const isOverdue = new Date(item.returnBy) < new Date();
@@ -114,7 +134,6 @@ export default function MyBorrowsPage() {
                     </p>
                   </div>
                   <div className="flex items-center sm:justify-center">
-                    {/* ✅ পুরো item পাঠান */}
                     <button
                       onClick={() => handleReturn(item)}
                       className="px-4 py-2 bg-green-400 text-black hover:bg-green-600 rounded text-sm transition-colors"
