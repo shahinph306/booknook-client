@@ -17,18 +17,34 @@ function ToastPortal({ ...props }: ToastPrimitive.Portal.Props) {
   return <ToastPrimitive.Portal data-slot="toast-portal" {...props} />
 }
 
+// function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
+//   return (
+//     <ToastPrimitive.Viewport
+//       data-slot="toast-viewport"
+//       className={cn(
+//         "pointer-events-none fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
+//         className
+//       )}
+//       {...props}
+//     />
+//   )
+// }
+
+
 function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
   return (
     <ToastPrimitive.Viewport
       data-slot="toast-viewport"
       className={cn(
-        "pointer-events-none fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
+        // ✅ Navbar-এর নিচে দেখানোর জন্য পরিবর্তন — top-20 = নিচে নামানো
+        "pointer-events-none fixed inset-x-4 top-20 z-[9999] mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full",
         className
       )}
       {...props}
     />
   )
 }
+
 
 function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
   return (

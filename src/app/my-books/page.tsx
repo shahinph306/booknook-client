@@ -3,6 +3,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/components/ui/toast'; // ✅ Toast import
 
 interface Book {
   _id: string;
@@ -25,17 +26,19 @@ export default function MyBooksPage() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Book>>({});
-  const [message, setMessage] = useState('');
   const user = getLoggedInUser();
 
-  // লোড বই
   const loadBooks = async () => {
     try {
       const res = await fetch(`http://localhost:8000/my-books/${user.email}`);
       const data = await res.json();
       if (data.success) setBooks(data.books);
     } catch {
-      setMessage('❌ Failed to load books');
+      toast.add({
+        type: 'error',
+        title: '❌ Failed to Load',
+        description: 'Could not load your books. Please refresh.',
+      });
     } finally {
       setLoading(false);
     }
@@ -43,7 +46,6 @@ export default function MyBooksPage() {
 
   useEffect(() => { loadBooks(); }, []);
 
-  // ডিলিট
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure to delete this book?')) return;
     try {
@@ -51,17 +53,28 @@ export default function MyBooksPage() {
       const data = await res.json();
       if (data.success) {
         setBooks(prev => prev.filter(b => b._id !== id));
-        setMessage('✅ Book deleted');
+        // ✅ Delete Toast
+        toast.add({
+          type: 'success',
+          title: '✅ Book Deleted',
+          description: 'The book has been removed successfully.',
+        });
       } else {
-        setMessage('❌ ' + data.message);
+        toast.add({
+          type: 'error',
+          title: '❌ Delete Failed',
+          description: data.message || 'Could not delete the book.',
+        });
       }
     } catch {
-      setMessage('❌ Delete failed');
+      toast.add({
+        type: 'error',
+        title: '❌ Delete Failed',
+        description: 'Something went wrong. Try again.',
+      });
     }
-    setTimeout(() => setMessage(''), 3000);
   };
 
-  // এডিট মোড শুরু
   const startEdit = (book: Book) => {
     setEditingId(book._id);
     setEditForm({
@@ -72,10 +85,8 @@ export default function MyBooksPage() {
       bookImageUrl: book.bookImageUrl,
       shortDescription: book.shortDescription,
     });
-    setMessage('');
   };
 
-  // সংরক্ষণ
   const saveEdit = async () => {
     if (!editingId) return;
     try {
@@ -88,21 +99,31 @@ export default function MyBooksPage() {
       if (data.success) {
         setBooks(prev => prev.map(b => b._id === editingId ? { ...b, ...data.book } : b));
         setEditingId(null);
-        setMessage('✅ Book updated');
+        // ✅ Save Success Toast
+        toast.add({
+          type: 'success',
+          title: '✅ Book Updated',
+          description: `"${editForm.bookTitle}" has been updated successfully!`,
+        });
       } else {
-        setMessage('❌ ' + data.message);
+        toast.add({
+          type: 'error',
+          title: '❌ Update Failed',
+          description: data.message || 'Could not save changes.',
+        });
       }
     } catch {
-      setMessage('❌ Update failed');
+      toast.add({
+        type: 'error',
+        title: '❌ Update Failed',
+        description: 'Something went wrong. Please try again.',
+      });
     }
-    setTimeout(() => setMessage(''), 3000);
   };
 
-  // এডিট বাতিল
   const cancelEdit = () => {
     setEditingId(null);
     setEditForm({});
-    setMessage('');
   };
 
   if (loading) return <p className="text-center py-10">Loading your books...</p>;
@@ -111,12 +132,6 @@ export default function MyBooksPage() {
     <main className="min-h-screen bg-amber-50 py-10 px-4 container mx-auto">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-serif text-gray-900 mb-6 text-center">My Books</h1>
-
-        {message && (
-          <p className={`text-center mb-4 font-medium ${message.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>
-            {message}
-          </p>
-        )}
 
         {books.length === 0 ? (
           <p className="text-center text-gray-500 py-10">
@@ -128,7 +143,6 @@ export default function MyBooksPage() {
             {books.map((book) => (
               <div key={book._id} className="bg-white rounded-lg shadow p-5 border">
                 {editingId === book._id ? (
-                  // এডিট ফর্ম
                   <div className="space-y-3">
                     <input
                       type="text"
@@ -194,7 +208,6 @@ export default function MyBooksPage() {
                     </div>
                   </div>
                 ) : (
-                  // বই দেখানোর ভিউ
                   <div className="flex flex-col md:flex-row gap-5">
                     {book.bookImageUrl && (
                       <img

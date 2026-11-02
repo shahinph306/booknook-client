@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-location-assign-relative-destination */
 // 'use client';
 
 // import Image from 'next/image';
@@ -262,14 +264,14 @@
 
 //             {/* Action Buttons */}
 //             <div className="flex gap-4 flex-wrap items-center">
-              
-              
+
+
 //               <Link
 //                 href={"/my-borrows"}
 //                 className="px-6 py-2 bg-[#2f6b52] hover:bg-[#275c46] text-white text-sm font-medium rounded transition-colors">
 //                 Borrow This Book
 //               </Link>
-              
+
 //               <Link
 //                 href="/all-books"
 //                 className="relative px-1 py-1 text-gray-600 text-sm font-medium 
@@ -292,6 +294,9 @@
 // export default BookDetailsPage;
 
 
+
+
+
 'use client';
 
 import Image from 'next/image';
@@ -308,6 +313,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/toast';
 
 type Book = {
   _id?: string;
@@ -323,6 +329,7 @@ type Book = {
 };
 
 type BorrowData = {
+  id: string;
   bookId: string;
   bookTitle: string;
   authorName: string;
@@ -349,11 +356,22 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [borrowLoading, setBorrowLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  
+  const [isAlreadyBorrowed, setIsAlreadyBorrowed] = useState<boolean>(false); // ✅ নতুন
+
   const loggedUser = getLoggedInUser();
   const borrowerName = loggedUser.name;
   const borrowerEmail = loggedUser.email;
+
+  // ✅ বইটি আগে বুক করা হয়েছে কিনা চেক করুন
+  useEffect(() => {
+    if (!book?._id) return;
+
+    const myBorrows = JSON.parse(localStorage.getItem('myBorrows') || '[]');
+    const already = myBorrows.some(
+      (item: BorrowData) => item.bookId === book._id
+    );
+    setIsAlreadyBorrowed(already);
+  }, [book?._id]);
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -386,33 +404,29 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
     fetchBook();
   }, [params]);
 
-  // ✅ ইমেজ URL ঠিক করা — বিভিন্ন ফিল্ড নাম সাপোর্ট + সঠিক ফলব্যাক
   const getImageUrl = (): string => {
     if (!book) return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
     
-    // বিভিন্ন ফিল্ড নাম চেক করুন
     const imgUrl = book.bookImageUrl || book.bookImage;
     
     if (imgUrl && imgUrl.startsWith('http')) {
       return imgUrl;
     }
 
-    // ✅ বইয়ের শিরোনাম দিয়ে স্বয়ংক্রিয়ভাবে সঠিক কভার খুঁজে বের করুন
-    const title = encodeURIComponent(book.bookTitle || 'book');
-    return `https://covers.openlibrary.org/b/title/${title}-L.jpg`;
+    return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
   };
 
   const handleConfirmBorrow = async () => {
     if (!book?._id) return;
 
     setBorrowLoading(true);
-    setMessage('');
 
     try {
       const borrowedAt = new Date().toISOString();
       const returnBy = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const borrowData: BorrowData = {
+        id: crypto.randomUUID(),
         bookId: book._id,
         bookTitle: book.bookTitle || 'Unknown Title',
         authorName: book.authorName || 'Unknown Author',
@@ -424,16 +438,36 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
       };
 
       const existing = JSON.parse(localStorage.getItem('myBorrows') || '[]');
-      localStorage.setItem('myBorrows', JSON.stringify([borrowData, ...existing]));
+      
+      // ডুপ্লিকেট বাদ দিন
+      const filtered = existing.filter(
+        (item: BorrowData) => item.bookId !== book._id
+      );
+      
+      localStorage.setItem(
+        'myBorrows',
+        JSON.stringify([borrowData, ...filtered])
+      );
 
-      setMessage('✅ Book borrowed successfully!');
+      // ✅ বুক করার সাথে সাথে স্টেট আপডেট
+      setIsAlreadyBorrowed(true);
+
+      toast.add({
+        type: 'success',
+        title: '✅ Book Borrowed Successfully!',
+        description: `"${book.bookTitle}" added to your borrows. Return by ${new Date(returnBy).toLocaleDateString()}.`,
+      });
       
       setTimeout(() => {
         setOpenDialog(false);
         window.location.href = '/my-borrows';
-      }, 1200);
+      }, 1500);
     } catch (err) {
-      setMessage('❌ Failed to borrow book');
+      toast.add({
+        type: 'error',
+        title: '❌ Failed to Borrow',
+        description: 'Something went wrong. Please try again.',
+      });
       console.error(err);
     } finally {
       setBorrowLoading(false);
@@ -465,7 +499,7 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Book Cover */}
           <div className="md:col-span-1">
-            <div className="relative w-full h-[320px] rounded overflow-hidden shadow-lg bg-gray-100">
+            <div className="relative w-full h-80 rounded overflow-hidden shadow-lg bg-gray-100">
               <Image
                 src={getImageUrl()}
                 alt={book.bookTitle || 'Book cover'}
@@ -514,11 +548,17 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
 
             {/* Action Buttons */}
             <div className="flex gap-4 flex-wrap items-center">
+              {/* ✅ আগে বুক করলে বাটন নিষ্ক্রিয় হবে */}
               <Button
                 onClick={() => setOpenDialog(true)}
-                className="bg-[#2f6b52] hover:bg-[#275c46] text-white px-6"
+                disabled={isAlreadyBorrowed}
+                className={`px-6 ${
+                  isAlreadyBorrowed
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-[#2f6b52] hover:bg-[#275c46] text-white'
+                }`}
               >
-                Borrow This Book
+                {isAlreadyBorrowed ? '✅ Already Borrowed' : 'Borrow This Book'}
               </Button>
 
               <Link
@@ -572,12 +612,6 @@ const BookDetailsPage = ({ params }: BookDetailsPageProps) => {
                 className="bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed"
               />
             </div>
-            
-            {message && (
-              <p className={`text-sm ${message.includes('✅') ? 'text-green-600' : 'text-red-500'}`}>
-                {message}
-              </p>
-            )}
           </div>
           
           <DialogFooter className="flex flex-col sm:flex-row gap-2">

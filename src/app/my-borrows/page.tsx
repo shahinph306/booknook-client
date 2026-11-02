@@ -4,8 +4,10 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from '@/components/ui/toast'; // ✅ Toast import
 
 type BorrowedBook = {
+  id?: string; // ✅ ইউনিক আইডি যোগ
   bookId: string;
   bookTitle: string;
   authorName: string;
@@ -23,14 +25,34 @@ export default function MyBorrowsPage() {
 
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem('myBorrows') || '[]');
-    setBorrows(data);
+    
+    // ✅ ডুপ্লিকেট সরান + id নেই তৈরি করে দিন
+    const unique = Array.from(
+      new Map(data.map((item: BorrowedBook) => [item.bookId, item]))
+    ).map(([_, item]) => ({
+      ...item,
+      id: item.id || `${item.bookId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    }));
+
+    if (unique.length !== data.length) {
+      localStorage.setItem('myBorrows', JSON.stringify(unique));
+    }
+
+    setBorrows(unique);
     setLoading(false);
   }, []);
 
-  const handleReturn = (bookId: string) => {
-    const updated = borrows.filter(b => b.bookId !== bookId);
+  const handleReturn = (item: BorrowedBook) => {
+    const updated = borrows.filter(b => b.id !== item.id); // ✅ id দিয়ে ফিল্টার
     localStorage.setItem('myBorrows', JSON.stringify(updated));
     setBorrows(updated);
+
+    // ✅ রিটার্ন করলে টোস্ট দেখান
+    toast.add({
+      type: 'success',
+      title: '✅ Book Returned',
+      description: `"${item.bookTitle}" has been returned successfully. Thank you!`,
+    });
   };
 
   const getImageUrl = (book: BorrowedBook): string => {
@@ -60,20 +82,21 @@ export default function MyBorrowsPage() {
           </p>
         ) : (
           <div className="space-y-4">
-            {borrows.map((book) => {
-              const borrowedDate = new Date(book.borrowedAt).toLocaleDateString();
-              const returnDate = new Date(book.returnBy).toLocaleDateString();
-              const isOverdue = new Date(book.returnBy) < new Date();
+            {/* ✅ key={item.id} — এরর আসবে না */}
+            {borrows.map((item) => {
+              const borrowedDate = new Date(item.borrowedAt).toLocaleDateString();
+              const returnDate = new Date(item.returnBy).toLocaleDateString();
+              const isOverdue = new Date(item.returnBy) < new Date();
 
               return (
                 <div
-                  key={book.bookId}
+                  key={item.id}
                   className="bg-white rounded-lg shadow-sm p-4 border flex flex-col sm:flex-row gap-4"
                 >
                   <div className="w-24 h-36 shrink-0 bg-gray-50 rounded overflow-hidden">
                     <Image
-                      src={getImageUrl(book)}
-                      alt={book.bookTitle}
+                      src={getImageUrl(item)}
+                      alt={item.bookTitle}
                       width={96}
                       height={144}
                       className="w-full h-full object-contain p-1"
@@ -81,8 +104,8 @@ export default function MyBorrowsPage() {
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-gray-900">{book.bookTitle}</h3>
-                    <p className="text-gray-500 text-sm mb-2">By {book.authorName}</p>
+                    <h3 className="font-semibold text-lg text-gray-900">{item.bookTitle}</h3>
+                    <p className="text-gray-500 text-sm mb-2">By {item.authorName}</p>
                     <p className="text-xs text-red-400">
                       Borrowed: {borrowedDate}
                     </p>
@@ -91,8 +114,9 @@ export default function MyBorrowsPage() {
                     </p>
                   </div>
                   <div className="flex items-center sm:justify-center">
+                    {/* ✅ পুরো item পাঠান */}
                     <button
-                      onClick={() => handleReturn(book.bookId)}
+                      onClick={() => handleReturn(item)}
                       className="px-4 py-2 bg-green-400 text-black hover:bg-green-600 rounded text-sm transition-colors"
                     >
                       Return Book
