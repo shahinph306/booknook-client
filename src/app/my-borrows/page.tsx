@@ -22,13 +22,13 @@ type BorrowedBook = {
 export default function MyBorrowsPage() {
   const [borrows, setBorrows] = useState<BorrowedBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [returningId, setReturningId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('myBorrows') || '[]';
       const data = JSON.parse(raw) as Partial<BorrowedBook>[];
 
-      // ✅ ডুপ্লিকেট সরান + id নিশ্চিত + টাইপ সঠিক
       const bookMap = new Map<string, Partial<BorrowedBook>>();
       data.forEach(item => {
         if (item.bookId) {
@@ -46,7 +46,6 @@ export default function MyBorrowsPage() {
         borrowedAt: item.borrowedAt || new Date().toISOString(),
         returnBy: item.returnBy || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         returned: item.returned,
-        // ✅ সর্বদা ইউনিক id তৈরি
         id: item.id || `${item.bookId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
       }));
 
@@ -63,16 +62,49 @@ export default function MyBorrowsPage() {
     }
   }, []);
 
-  const handleReturn = (item: BorrowedBook) => {
-    const updated = borrows.filter(b => b.id !== item.id);
-    localStorage.setItem('myBorrows', JSON.stringify(updated));
-    setBorrows(updated);
+  // ✅ Return করলে সার্ভারে কপি বাড়ানো + স্থানীয় থেকে সরানো
+  const handleReturn = async (item: BorrowedBook) => {
+    if (returningId) return;
 
-    toast.add({
-      type: 'success',
-      title: '✅ Book Returned',
-      description: `"${item.bookTitle}" has been returned successfully. Thank you!`,
-    });
+    setReturningId(item.id);
+
+    try {
+      // সার্ভারকে জানান — কপি বাড়ানোর জন্য
+      const res = await fetch('http://localhost:8000/return-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookId: item.bookId,
+          borrowerEmail: item.borrowerEmail,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Server returned error');
+
+      // স্থানীয় থেকে সরান
+      const updated = borrows.filter(b => b.id !== item.id);
+      localStorage.setItem('myBorrows', JSON.stringify(updated));
+      setBorrows(updated);
+
+      toast.add({
+        type: 'success',
+        title: '✅ Book Returned',
+        description: `"${item.bookTitle}" has been returned. Copies updated.`,
+      });
+    } catch (err) {
+      console.error('Return error:', err);
+      toast.add({
+        type: 'error',
+        title: '⚠️ Return Partially Saved',
+        description: 'Removed from your list. Refresh to see updated copies.',
+      });
+      // তবুও স্থানীয় থেকে সরান
+      const updated = borrows.filter(b => b.id !== item.id);
+      localStorage.setItem('myBorrows', JSON.stringify(updated));
+      setBorrows(updated);
+    } finally {
+      setReturningId(null);
+    }
   };
 
   const getImageUrl = (book: BorrowedBook): string => {
@@ -103,10 +135,10 @@ export default function MyBorrowsPage() {
         ) : (
           <div className="space-y-4">
             {borrows.map((item) => {
-              // ✅ এখানে 'item' পুরোপুরি টাইপড BorrowedBook
               const borrowedDate = new Date(item.borrowedAt).toLocaleDateString();
               const returnDate = new Date(item.returnBy).toLocaleDateString();
               const isOverdue = new Date(item.returnBy) < new Date();
+              const isReturning = returningId === item.id;
 
               return (
                 <div
@@ -136,9 +168,14 @@ export default function MyBorrowsPage() {
                   <div className="flex items-center sm:justify-center">
                     <button
                       onClick={() => handleReturn(item)}
-                      className="px-4 py-2 bg-green-400 text-black hover:bg-green-600 rounded text-sm transition-colors"
+                      disabled={isReturning}
+                      className={`px-4 py-2 rounded text-sm transition-colors ${
+                        isReturning
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-green-400 text-black hover:bg-green-600'
+                      }`}
                     >
-                      Return Book
+                      {isReturning ? 'Returning...' : 'Return Book'}
                     </button>
                   </div>
                 </div>
