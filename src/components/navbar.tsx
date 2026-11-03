@@ -1,134 +1,356 @@
+"use client";
 
-'use client';
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
+import { authClient } from "@/lib/auth-client";
 
-const NavbarPage = () => {
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+
+import { Button } from "@/components/ui/button";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+import {
+  BookOpen,
+  Menu,
+  X,
+  User,
+  LogOut,
+  BookPlus,
+  Library,
+  BookMarked,
+  Home,
+  ChevronDown,
+} from "lucide-react";
+
+const navLinks = [
+  {
+    title: "Home",
+    href: "/",
+    icon: Home,
+  },
+  {
+    title: "All Books",
+    href: "/all-books",
+    icon: Library,
+  },
+  {
+    title: "Add Book",
+    href: "/add-book",
+    icon: BookPlus,
+  },
+  {
+    title: "My Books",
+    href: "/my-books",
+    icon: BookOpen,
+  },
+  {
+    title: "My Borrows",
+    href: "/my-borrows",
+    icon: BookMarked,
+  },
+];
+
+const Navbar = () => {
+  const router = useRouter();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const { data: session, isPending } = authClient.useSession();
+
+  const user = session?.user;
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+
+      await authClient.signOut();
+
+      setMobileMenuOpen(false);
+
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#fbfaf7]/95 backdrop-blur-md dark:bg-[#121814]/95 border-b border-black/[0.07] dark:border-white/10 font-semibold mx-auto container">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
-        
+    <header className="sticky top-0 z-50 w-full border-b border-green-100 bg-white/95 shadow-sm backdrop-blur-md">
+      <nav className="container mx-auto flex min-h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 rounded-[10px] bg-[#2f6b52] flex items-center justify-center">
-            <Image
-              src="/images/bookIcon.png"
-              alt="BookNook Logo"
-              width={20}
-              height={20}
-            />
+        <Link
+          href="/"
+          onClick={closeMobileMenu}
+          className="flex items-center gap-2"
+        >
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600 text-white shadow-md">
+            <BookOpen size={25} />
           </div>
-          <span className="text-xl font-semibold text-[#1d2822] dark:text-white">BookNook</span>
+
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-green-700 sm:text-2xl">
+              BookNook
+            </h1>
+
+            <p className="text-[10px] font-medium tracking-wider text-gray-500">
+              YOUR DIGITAL LIBRARY
+            </p>
+          </div>
         </Link>
 
-        {/* Desktop/Tablet Links — পাশাপাশি দেখাবে */}
-        <nav className="hidden md:flex items-center gap-1">
-          {[
-            { label: "Home", href: "/" },
-            { label: "All Books", href: "/all-books" },
-            { label: "Add Book", href: "/add-book" },
-            { label: "My Books", href: "/my-books" },
-            { label: "My Borrows", href: "/my-borrows" },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="px-3 py-2 rounded-md text-sm text-[#4b554f] dark:text-white/70
-                hover:bg-[#2f6b52]/10 hover:text-[#2f6b52]
-                dark:hover:bg-white/10 dark:hover:text-white
-                transition-colors duration-200 whitespace-nowrap"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-1 lg:flex">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
 
-        {/* Auth Buttons + Mobile Toggle */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden sm:flex items-center gap-2">
-            <Link
-              href="/login"
-              className="px-4 py-2 rounded-md border border-[#d6d9d4] bg-white text-sm text-[#2a352e]
-                hover:bg-[#f3f4f1] dark:border-white/15 dark:bg-transparent dark:text-white dark:hover:bg-white/10
-                transition-colors duration-200 whitespace-nowrap"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="px-4 py-2 rounded-md bg-[#2f6b52] text-white text-sm
-                hover:bg-[#275c46] transition-colors duration-200 whitespace-nowrap"
-            >
-              Register
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className="md:hidden p-2 rounded-md text-[#4b554f] dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute left-4 right-4 top-16 z-50">
-          <div className="bg-[#fbfaf7] dark:bg-[#121814] border border-black/[0.07] dark:border-white/10 rounded-lg shadow-lg p-3">
-            <nav className="flex flex-col gap-1 mb-2">
-              {[
-                { label: "Home", href: "/" },
-                { label: "All Books", href: "/all-books" },
-                { label: "Add Book", href: "/add-book" },
-                { label: "My Books", href: "/my-books" },
-                { label: "My Borrows", href: "/my-borrows" },
-              ].map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-md text-[#4b554f] dark:text-white/70
-                    hover:bg-[#2f6b52]/10 hover:text-[#2f6b52]
-                    dark:hover:bg-white/10 dark:hover:text-white
-                    transition-colors duration-200"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="flex flex-col gap-2">
+            return (
               <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 rounded-md border border-[#d6d9d4] bg-white text-center text-[#2a352e]
-                  dark:border-white/15 dark:bg-transparent dark:text-white"
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-green-50 hover:text-green-700"
+              >
+                <Icon size={17} />
+                {link.title}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Desktop Authentication */}
+        <div className="hidden items-center gap-3 lg:flex">
+          {isPending ? (
+            <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
+          ) : user ? (
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full border border-green-100 bg-green-50 p-1.5 pr-3 transition-all hover:border-green-300 hover:bg-green-100"
+                  />
+                }
+              >
+                <Avatar className="h-9 w-9 border-2 border-green-500">
+                  <AvatarImage
+                    src={user.image || ""}
+                    alt={user.name || "User"}
+                    referrerPolicy="no-referrer"
+                  />
+
+                  <AvatarFallback className="bg-green-600 font-semibold text-white">
+                    {user.name?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+
+                <span className="max-w-24 truncate text-sm font-semibold text-gray-700">
+                  {user.name || "User"}
+                </span>
+
+                <ChevronDown size={16} className="text-green-700" />
+              </PopoverTrigger>
+
+              <PopoverContent
+                align="end"
+                className="w-64 overflow-hidden rounded-xl border border-green-100 bg-white p-2 shadow-xl"
+              >
+                <div className="mb-2 flex items-center gap-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-3">
+                  <Avatar className="h-11 w-11 border-2 border-green-500">
+                    <AvatarImage
+                      src={user.image || ""}
+                      alt={user.name || "User"}
+                      referrerPolicy="no-referrer"
+                    />
+
+                    <AvatarFallback className="bg-green-600 text-white">
+                      {user.name?.charAt(0)?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-gray-800">
+                      {user.name || "User"}
+                    </p>
+
+                    <p className="truncate text-xs text-gray-500">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-green-50 hover:text-green-700"
+                >
+                  <User size={17} />
+                  My Profile
+                </Link>
+
+                <div className="my-1 border-t border-gray-100" />
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                >
+                  <LogOut size={17} />
+                  {loggingOut ? "Logging out..." : "Logout"}
+                </button>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <>
+              <Button
+                nativeButton={false}
+                render={<Link href="/login" />}
+                variant="outline"
+                className="border-green-600 text-green-700 hover:bg-green-50"
               >
                 Login
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 rounded-md bg-[#2f6b52] text-white text-center
-                  hover:bg-[#275c46]"
+              </Button>
+
+              <Button
+                nativeButton={false}
+                render={<Link href="/register" />}
+                className="bg-green-600 text-white hover:bg-green-700"
               >
                 Register
-              </Link>
-            </div>
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-lg p-2 text-gray-700 transition hover:bg-green-50 lg:hidden"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? <X size={25} /> : <Menu size={25} />}
+        </button>
+      </nav>
+
+      {/* Mobile Navigation */}
+      {mobileMenuOpen && (
+        <div className="border-t border-green-100 bg-white px-4 py-4 shadow-lg lg:hidden">
+          <div className="container mx-auto flex flex-col gap-1">
+
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-green-50 hover:text-green-700"
+                >
+                  <Icon size={19} />
+                  {link.title}
+                </Link>
+              );
+            })}
+
+            <div className="my-2 border-t border-gray-100" />
+
+            {isPending ? (
+              <div className="h-10 animate-pulse rounded-lg bg-gray-100" />
+            ) : user ? (
+              <>
+                <div className="flex items-center gap-3 rounded-lg bg-green-50 p-3">
+                  <Avatar className="h-11 w-11 border-2 border-green-500">
+                    <AvatarImage
+                      src={user.image || ""}
+                      alt={user.name || "User"}
+                      referrerPolicy="no-referrer"
+                    />
+
+                    <AvatarFallback className="bg-green-600 text-white">
+                      {user.name?.charAt(0)?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-gray-800">
+                      {user.name || "User"}
+                    </p>
+
+                    <p className="truncate text-xs text-gray-500">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/profile"
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-700 hover:bg-green-50"
+                >
+                  <User size={18} />
+                  My Profile
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  <LogOut size={18} />
+                  {loggingOut ? "Logging out..." : "Logout"}
+                </button>
+              </>
+            ) : (
+              <div className="flex gap-3">
+                <Button
+                  nativeButton={false}
+                  render={
+                    <Link
+                      href="/login"
+                      onClick={closeMobileMenu}
+                    />
+                  }
+                  variant="outline"
+                  className="flex-1 border-green-600 text-green-700"
+                >
+                  Login
+                </Button>
+
+                <Button
+                  nativeButton={false}
+                  render={
+                    <Link
+                      href="/register"
+                      onClick={closeMobileMenu}
+                    />
+                  }
+                  className="flex-1 bg-green-600 text-white hover:bg-green-700"
+                >
+                  Register
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -136,4 +358,4 @@ const NavbarPage = () => {
   );
 };
 
-export default NavbarPage;
+export default Navbar;
