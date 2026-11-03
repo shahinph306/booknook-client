@@ -1,425 +1,526 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
 
+"use client";
 
-// /* eslint-disable react-hooks/set-state-in-effect */
+import {
+  useState,
+  useEffect,
+  type FormEvent,
+  type ChangeEvent,
+} from "react";
 
-// 'use client';
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
-// import { useState, useEffect } from 'react';
+const API_URL = "http://localhost:8000";
 
-// // লগইন করা ব্যবহারকারীর ডেটা
-// const getLoggedInUser = () => {
-//   return {
-//     name: 'xyz',
-//     email: 'xyz@gmail.com',
-//   };
-// };
-
-// const AddBookPage = () => {
-//   const [formData, setFormData] = useState({
-//     bookTitle: '',
-//     authorName: '',
-//     category: 'Fiction',
-//     totalCopies: 1,
-//     bookImageUrl: '', // ✅ ফাইলের বদলে URL
-//     shortDescription: '',
-//     userName: '',
-//     userEmail: '',
-//   });
-
-//   useEffect(() => {
-//     const user = getLoggedInUser();
-//     setFormData((prev) => ({
-//       ...prev,
-//       userName: user.name,
-//       userEmail: user.email,
-//     }));
-//   }, []);
-
-//   const handleChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-//   ) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-    
-//     const res = await fetch("http://localhost:8000/add-book", {
-//       method: "POST",
-//       body: JSON.stringify(formData),
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//     });
-//     const data = await res.json();
-//     console.log(data);
-//   };
-
-//   return (
-//     <main className="min-h-screen bg-amber-50 py-10 px-4 mx-auto container">
-//       <div className="max-w-2xl mx-auto">
-//         {/* Heading */}
-//         <div className="text-center mb-8">
-//           <h1 className="text-3xl font-serif text-gray-900 mb-2">Add a Book</h1>
-//           <p className="text-gray-500">Put a book from your shelf into the library.</p>
-//         </div>
-
-//         {/* Form */}
-//         <form onSubmit={handleSubmit} className="space-y-5">
-//           {/* Row 1: Book Title & Author Name */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-//             <div>
-//               <label htmlFor="bookTitle" className="block text-sm text-gray-700 mb-1.5">
-//                 Book Title
-//               </label>
-//               <input
-//                 type="text"
-//                 id="bookTitle"
-//                 name="bookTitle"
-//                 value={formData.bookTitle}
-//                 onChange={handleChange}
-//                 className="w-full px-3 py-2 border border-black-100 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
-//                 required
-//               />
-//             </div>
-//             <div>
-//               <label htmlFor="authorName" className="block text-sm text-gray-700 mb-1.5">
-//                 Author Name
-//               </label>
-//               <input
-//                 type="text"
-//                 id="authorName"
-//                 name="authorName"
-//                 value={formData.authorName}
-//                 onChange={handleChange}
-//                 className="w-full px-3 py-2 border border-black-100 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
-//                 required
-//               />
-//             </div>
-//           </div>
-
-//           {/* Row 2: Category & Total Copies */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-//             <div>
-//               <label htmlFor="category" className="block text-sm text-gray-700 mb-1.5">
-//                 Category
-//               </label>
-//               <select
-//                 id="category"
-//                 name="category"
-//                 value={formData.category}
-//                 onChange={handleChange}
-//                 className="w-full px-3 py-2 border border-black-100 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
-//               >
-//                 <option value="Fiction">Fiction</option>
-//                 <option value="Science">Science</option>
-//                 <option value="History">History</option>
-//                 <option value="Kids">Kids</option>
-//               </select>
-//             </div>
-//             <div>
-//               <label htmlFor="totalCopies" className="block text-sm text-gray-700 mb-1.5">
-//                 Total Copies
-//               </label>
-//               <input
-//                 type="number"
-//                 id="totalCopies"
-//                 name="totalCopies"
-//                 value={formData.totalCopies}
-//                 onChange={handleChange}
-//                 min={1}
-//                 className="w-full px-3 py-2 border border-black-100 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
-//               />
-//             </div>
-//           </div>
-
-//           {/* ✅ Book Image — Now URL Only */}
-//           <div>
-//             <label htmlFor="bookImageUrl" className="block text-sm text-gray-700 mb-1.5">
-//               Book Image URL
-//             </label>
-//             <input
-//               type="url"
-//               id="bookImageUrl"
-//               name="bookImageUrl"
-//               value={formData.bookImageUrl}
-//               onChange={handleChange}
-//               placeholder="https://example.com/book-cover.jpg"
-//               className="w-full px-3 py-2 border border-black-100 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
-//               required
-//             />
-//             <p className="text-xs text-gray-400 mt-1">
-//               Give the link of the book cover image — like: https://example.com/book.jpg
-//             </p>
-//           </div>
-
-//           {/* Short Description */}
-//           <div>
-//             <label htmlFor="shortDescription" className="block text-sm text-gray-700 mb-1.5">
-//               Short Description
-//             </label>
-//             <textarea
-//               id="shortDescription"
-//               name="shortDescription"
-//               value={formData.shortDescription}
-//               onChange={handleChange}
-//               rows={3}
-//               className="w-full px-3 py-2 border border-black-100 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
-//             />
-//           </div>
-
-//           {/* User Name & Email — Read Only */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-//             <div>
-//               <label htmlFor="userName" className="block text-sm text-gray-700 mb-1.5">
-//                 User Name
-//               </label>
-//               <input
-//                 type="text"
-//                 id="userName"
-//                 name="userName"
-//                 value={formData.userName}
-//                 readOnly
-//                 className="w-full px-3 py-2 border border-black-100 rounded bg-white text-gray-600 cursor-not-allowed"
-//               />
-//             </div>
-//             <div>
-//               <label htmlFor="userEmail" className="block text-sm text-gray-700 mb-1.5">
-//                 User Email
-//               </label>
-//               <input
-//                 type="email"
-//                 id="userEmail"
-//                 name="userEmail"
-//                 value={formData.userEmail}
-//                 readOnly
-//                 className="w-full px-3 py-2 border border-black-100 rounded bg-white text-gray-600 cursor-not-allowed"
-//               />
-//             </div>
-//           </div>
-
-//           {/* Submit Button */}
-//           <button
-//             type="submit"
-//             className="w-full py-2.5 bg-[#2f6b52] hover:bg-[#275c46] text-white font-medium rounded transition-colors mt-2"
-//           >
-//             Add Book
-//           </button>
-//         </form>
-//       </div>
-//     </main>
-//   );
-// };
-
-// export default AddBookPage;
-
-
-
-
-
-
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from '@/components/ui/toast'; // ✅ Toast import
-
-const getLoggedInUser = () => {
-  return {
-    name: 'xyz',
-    email: 'xyz@gmail.com',
+type GoogleBook = {
+  id: string;
+  volumeInfo: {
+    title?: string;
+    authors?: string[];
+    description?: string;
+    imageLinks?: {
+      thumbnail?: string;
+      smallThumbnail?: string;
+      small?: string;
+      medium?: string;
+      large?: string;
+      extraLarge?: string;
+    };
   };
 };
 
 const AddBookPage = () => {
   const router = useRouter();
+
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
   const [formData, setFormData] = useState({
-    bookTitle: '',
-    authorName: '',
-    category: 'Fiction',
+    bookTitle: "",
+    authorName: "",
+    category: "fiction",
     totalCopies: 1,
-    bookImageUrl: '',
-    shortDescription: '',
-    userName: '',
-    userEmail: '',
+    bookImageUrl: "",
+    shortDescription: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<GoogleBook[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
+  // Redirect if user is not logged in
   useEffect(() => {
-    const user = getLoggedInUser();
-    setFormData((prev) => ({
-      ...prev,
-      userName: user.name,
-      userEmail: user.email,
-    }));
-  }, []);
+    if (!isPending && !user) {
+      router.replace("/login");
+    }
+  }, [isPending, user, router]);
 
+  // Search Google Books API when title changes
+  useEffect(() => {
+    const title = formData.bookTitle.trim();
+
+    if (title.length < 3) {
+      setSearchResults([]);
+      setSearchError("");
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      setSearchError("");
+
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
+            `intitle:${title}`
+          )}&maxResults=6&printType=books`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error("Google Books search failed.");
+        }
+
+        const data = await response.json();
+
+        setSearchResults(data.items || []);
+
+        if (!data.items || data.items.length === 0) {
+          setSearchError("No books found. Try another title.");
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Google Books Error:", error);
+          setSearchError("Unable to search books. Please try again.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearching(false);
+        }
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [formData.bookTitle]);
+
+  // Handle input changes
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "totalCopies" ? Number(value) : value,
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Select a book from Google Books
+  const handleSelectBook = (book: GoogleBook) => {
+    const info = book.volumeInfo;
+
+    const imageUrl =
+      info.imageLinks?.extraLarge ||
+      info.imageLinks?.large ||
+      info.imageLinks?.medium ||
+      info.imageLinks?.thumbnail ||
+      info.imageLinks?.smallThumbnail ||
+      "";
+
+    const secureImageUrl = imageUrl
+      .replace("http://", "https://")
+      .replace("&edge=curl", "");
+
+    setFormData((prev) => ({
+      ...prev,
+      bookTitle: info.title || prev.bookTitle,
+      authorName: info.authors?.join(", ") || prev.authorName,
+      bookImageUrl: secureImageUrl,
+      shortDescription: info.description
+        ? info.description.replace(/<[^>]*>/g, "").slice(0, 1000)
+        : prev.shortDescription,
+    }));
+
+    setSearchResults([]);
+    setSearchError("");
+
+    toast.add({
+      type: "success",
+      title: "Book Selected",
+      description: "Book information has been filled automatically.",
+    });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!user) {
+      toast.add({
+        type: "error",
+        title: "Login Required",
+        description: "Please login before adding a book.",
+      });
+      return;
+    }
+
+    if (!formData.bookImageUrl) {
+      toast.add({
+        type: "error",
+        title: "Book Image Required",
+        description: "Please select a book or provide an image URL.",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/add-book", {
+      const bookData = {
+        ...formData,
+        userName: user.name || "",
+        userEmail: user.email || "",
+        createdAt: new Date(),
+      };
+
+      const res = await fetch(`${API_URL}/add-book`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookData),
       });
 
       const data = await res.json();
-      
-      if (data.success) {
-        // ✅ সফল হলে টোস্ট
-        toast.add({
-          type: 'success',
-          title: '✅ Book Added Successfully!',
-          description: `"${formData.bookTitle}" has been added to your books.`,
-        });
 
-        setFormData(prev => ({
-          ...prev,
-          bookTitle: '',
-          authorName: '',
-          bookImageUrl: '',
-          shortDescription: '',
-          totalCopies: 1,
-        }));
-
-        setTimeout(() => router.push('/my-books'), 1500);
-      } else {
-        // ✅ সার্ভার থেকে ব্যর্থ হলে টোস্ট
-        toast.add({
-          type: 'error',
-          title: '❌ Failed to Add Book',
-          description: data.error || 'Something went wrong. Please try again.',
-        });
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.error || data.message || "Failed to add book."
+        );
       }
-    } catch (err) {
-      // ✅ নেটওয়ার্ক/সার্ভার না পেলে টোস্ট
+
       toast.add({
-        type: 'error',
-        title: '❌ Server Connection Failed',
-        description: 'Check if your server is running at port 8000.',
+        type: "success",
+        title: "Book Added Successfully!",
+        description: `${formData.bookTitle} has been added to your library.`,
+      });
+
+      setFormData({
+        bookTitle: "",
+        authorName: "",
+        category: "fiction",
+        totalCopies: 1,
+        bookImageUrl: "",
+        shortDescription: "",
+      });
+
+      router.push("/my-books");
+    } catch (error) {
+      console.error("Add Book Error:", error);
+
+      toast.add({
+        type: "error",
+        title: "Failed to Add Book",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your server connection.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isPending || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-amber-50">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-amber-50 py-10 px-4 container mx-auto">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-serif text-gray-900 mb-2">Add a Book</h1>
-          <p className="text-gray-500">Put a book from your shelf into the library.</p>
+    <main className="container mx-auto min-h-screen bg-amber-50 px-4 py-10">
+      <div className="mx-auto max-w-2xl">
+
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 font-serif text-3xl text-gray-900">
+            Add a Book
+          </h1>
+
+          <p className="text-gray-500">
+            Put a book from your shelf into the library.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+
           {/* Book Title & Author */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="bookTitle" className="block text-sm text-gray-700 mb-1.5">Book Title</label>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+            <div className="relative">
+              <label
+                htmlFor="bookTitle"
+                className="mb-1.5 block text-sm text-gray-700"
+              >
+                Book Title
+              </label>
+
               <input
-                type="text" id="bookTitle" name="bookTitle"
-                value={formData.bookTitle} onChange={handleChange}
-                className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                type="text"
+                id="bookTitle"
+                name="bookTitle"
+                value={formData.bookTitle}
+                onChange={handleChange}
+                placeholder="Enter book title"
                 required
+                autoComplete="off"
+                className="w-full rounded border border-black/10 bg-white px-3 py-2"
               />
+
+              {isSearching && (
+                <p className="mt-2 text-sm text-gray-500">
+                  Searching Google Books...
+                </p>
+              )}
+
+              {searchError && !isSearching && (
+                <p className="mt-2 text-sm text-gray-500">
+                  {searchError}
+                </p>
+              )}
+
+              {/* Google Books Search Results */}
+              {searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 z-20 mt-2 max-h-80 overflow-y-auto rounded-lg border bg-white shadow-xl">
+
+                  <p className="border-b px-3 py-2 text-xs font-semibold text-gray-500">
+                    SELECT YOUR BOOK
+                  </p>
+
+                  {searchResults.map((book) => {
+                    const info = book.volumeInfo;
+
+                    const image =
+                      info.imageLinks?.thumbnail ||
+                      info.imageLinks?.smallThumbnail;
+
+                    return (
+                      <button
+                        key={book.id}
+                        type="button"
+                        onClick={() => handleSelectBook(book)}
+                        className="flex w-full items-center gap-3 border-b p-3 text-left transition hover:bg-amber-50"
+                      >
+                        {image ? (
+                          <img
+                            src={image.replace("http://", "https://")}
+                            alt={info.title || "Book cover"}
+                            className="h-16 w-12 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-12 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">
+                            No Image
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {info.title || "Unknown Title"}
+                          </p>
+
+                          <p className="mt-1 text-xs text-gray-500">
+                            {info.authors?.join(", ") || "Unknown Author"}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
             <div>
-              <label htmlFor="authorName" className="block text-sm text-gray-700 mb-1.5">Author Name</label>
+              <label
+                htmlFor="authorName"
+                className="mb-1.5 block text-sm text-gray-700"
+              >
+                Author Name
+              </label>
+
               <input
-                type="text" id="authorName" name="authorName"
-                value={formData.authorName} onChange={handleChange}
-                className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                type="text"
+                id="authorName"
+                name="authorName"
+                value={formData.authorName}
+                onChange={handleChange}
+                placeholder="Enter author name"
                 required
+                className="w-full rounded border border-black/10 bg-white px-3 py-2"
               />
             </div>
           </div>
 
           {/* Category & Copies */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
             <div>
-              <label htmlFor="category" className="block text-sm text-gray-700 mb-1.5">Category</label>
-              <select
-                id="category" name="category" value={formData.category} onChange={handleChange}
-                className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+              <label
+                htmlFor="category"
+                className="mb-1.5 block text-sm text-gray-700"
               >
-                <option value="Fiction">Fiction</option>
-                <option value="Science">Science</option>
-                <option value="History">History</option>
-                <option value="Kids">Kids</option>
+                Category
+              </label>
+
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full rounded border border-black/10 bg-white px-3 py-2"
+              >
+                <option value="fiction">Fiction</option>
+                <option value="science">Science</option>
+                <option value="history">History</option>
+                <option value="kids">Kids</option>
               </select>
             </div>
+
             <div>
-              <label htmlFor="totalCopies" className="block text-sm text-gray-700 mb-1.5">Total Copies</label>
+              <label
+                htmlFor="totalCopies"
+                className="mb-1.5 block text-sm text-gray-700"
+              >
+                Total Copies
+              </label>
+
               <input
-                type="number" id="totalCopies" name="totalCopies"
-                value={formData.totalCopies} onChange={handleChange}
+                type="number"
+                id="totalCopies"
+                name="totalCopies"
+                value={formData.totalCopies}
+                onChange={handleChange}
                 min={1}
-                className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                required
+                className="w-full rounded border border-black/10 bg-white px-3 py-2"
               />
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* Book Image URL */}
           <div>
-            <label htmlFor="bookImageUrl" className="block text-sm text-gray-700 mb-1.5">Book Image URL</label>
+            <label
+              htmlFor="bookImageUrl"
+              className="mb-1.5 block text-sm text-gray-700"
+            >
+              Book Cover Image URL
+            </label>
+
             <input
-              type="url" id="bookImageUrl" name="bookImageUrl"
-              value={formData.bookImageUrl} onChange={handleChange}
-              placeholder="https://example.com/book-cover.jpg"
-              className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+              type="url"
+              id="bookImageUrl"
+              name="bookImageUrl"
+              value={formData.bookImageUrl}
+              onChange={handleChange}
+              placeholder="Select a book or paste an image URL"
               required
+              className="w-full rounded border border-black/10 bg-white px-3 py-2"
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Give the link of the book cover image — like: https://example.com/book.jpg
-            </p>
+
+            {/* Image Preview */}
+            {formData.bookImageUrl && (
+              <div className="mt-4 rounded-lg border bg-white p-4">
+                <p className="mb-3 text-sm font-medium text-gray-700">
+                  Book Cover Preview
+                </p>
+
+                <img
+                  src={formData.bookImageUrl}
+                  alt="Selected book cover"
+                  className="h-56 w-40 rounded-lg border object-contain shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                  onLoad={(e) => {
+                    e.currentTarget.style.display = "block";
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="shortDescription" className="block text-sm text-gray-700 mb-1.5">Short Description</label>
+            <label
+              htmlFor="shortDescription"
+              className="mb-1.5 block text-sm text-gray-700"
+            >
+              Short Description
+            </label>
+
             <textarea
-              id="shortDescription" name="shortDescription" value={formData.shortDescription} onChange={handleChange}
+              id="shortDescription"
+              name="shortDescription"
+              value={formData.shortDescription}
+              onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+              placeholder="Write a short description..."
+              className="w-full rounded border border-black/10 bg-white px-3 py-2"
             />
           </div>
 
-          {/* Read-only User Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* User Information */}
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
             <div>
-              <label htmlFor="userName" className="block text-sm text-gray-700 mb-1.5">User Name</label>
+              <label className="mb-1.5 block text-sm text-gray-700">
+                User Name
+              </label>
+
               <input
-                type="text" id="userName" name="userName" value={formData.userName} readOnly
-                className="w-full px-3 py-2 border border-black/10 rounded bg-white text-gray-600 cursor-not-allowed"
+                type="text"
+                value={user.name || ""}
+                readOnly
+                className="w-full cursor-not-allowed rounded border border-black/10 bg-gray-100 px-3 py-2"
               />
             </div>
+
             <div>
-              <label htmlFor="userEmail" className="block text-sm text-gray-700 mb-1.5">User Email</label>
+              <label className="mb-1.5 block text-sm text-gray-700">
+                User Email
+              </label>
+
               <input
-                type="email" id="userEmail" name="userEmail" value={formData.userEmail} readOnly
-                className="w-full px-3 py-2 border border-black/10 rounded bg-white text-gray-600 cursor-not-allowed"
+                type="email"
+                value={user.email || ""}
+                readOnly
+                className="w-full cursor-not-allowed rounded border border-black/10 bg-gray-100 px-3 py-2"
               />
             </div>
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full py-2.5 bg-[#2f6b52] hover:bg-[#275c46] disabled:bg-gray-400 text-white font-medium rounded transition-colors mt-2"
+            disabled={isLoading || isSearching}
+            className="mt-2 w-full rounded bg-[#2f6b52] py-2.5 font-medium text-white transition-colors hover:bg-[#275c46] disabled:cursor-not-allowed disabled:bg-gray-400"
           >
-            {isLoading ? 'Adding...' : 'Add Book'}
+            {isLoading ? "Adding Book..." : "Add Book"}
           </button>
+
         </form>
       </div>
     </main>

@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 import {
@@ -63,25 +64,37 @@ const navLinks = [
 
 const Navbar = () => {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const { data: session, isPending } = authClient.useSession();
 
   const user = session?.user;
 
+  // Close menus whenever route changes
+  useEffect(() => {
+    setPopoverOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
+  };
+
+  const closePopover = () => {
+    setPopoverOpen(false);
   };
 
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
+      closePopover();
+      closeMobileMenu();
 
       await authClient.signOut();
-
-      setMobileMenuOpen(false);
 
       router.push("/login");
       router.refresh();
@@ -99,7 +112,10 @@ const Navbar = () => {
         {/* Logo */}
         <Link
           href="/"
-          onClick={closeMobileMenu}
+          onClick={() => {
+            closeMobileMenu();
+            closePopover();
+          }}
           className="flex items-center gap-2"
         >
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600 text-white shadow-md">
@@ -126,6 +142,7 @@ const Navbar = () => {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={closePopover}
                 className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-green-50 hover:text-green-700"
               >
                 <Icon size={17} />
@@ -140,7 +157,10 @@ const Navbar = () => {
           {isPending ? (
             <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200" />
           ) : user ? (
-            <Popover>
+            <Popover
+              open={popoverOpen}
+              onOpenChange={setPopoverOpen}
+            >
               <PopoverTrigger
                 render={
                   <button
@@ -196,8 +216,10 @@ const Navbar = () => {
                   </div>
                 </div>
 
+                {/* My Profile */}
                 <Link
                   href="/profile"
+                  onClick={closePopover}
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-green-50 hover:text-green-700"
                 >
                   <User size={17} />
@@ -206,6 +228,7 @@ const Navbar = () => {
 
                 <div className="my-1 border-t border-gray-100" />
 
+                {/* Logout */}
                 <button
                   type="button"
                   onClick={handleLogout}

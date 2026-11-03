@@ -5,6 +5,7 @@ import NavbarPage from "@/components/navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/toast";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <NavbarPage />
         <Toaster />
+         
         {children}
         <Footer />
         </body>

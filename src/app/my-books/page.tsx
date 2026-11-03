@@ -1,9 +1,19 @@
-/* eslint-disable @next/next/no-img-element */
-/* eslint-disable react-hooks/set-state-in-effect */
-'use client';
 
-import { useState, useEffect } from 'react';
-import { toast } from '@/components/ui/toast'; // ✅ Toast import
+/* eslint-disable react-hooks/preserve-manual-memoization */
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
+
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
+
+const API_URL = "http://localhost:8000";
 
 interface Book {
   _id: string;
@@ -15,68 +25,84 @@ interface Book {
   shortDescription: string;
   userName: string;
   userEmail: string;
+  createdAt?: string;
 }
 
-const getLoggedInUser = () => {
-  return { name: 'xyz', email: 'xyz@gmail.com' };
-};
+const MyBooksPage = () => {
+  const router = useRouter();
 
-export default function MyBooksPage() {
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Book>>({});
-  const user = getLoggedInUser();
 
-  const loadBooks = async () => {
-    try {
-      const res = await fetch(`http://localhost:8000/my-books/${user.email}`);
-      const data = await res.json();
-      if (data.success) setBooks(data.books);
-    } catch {
-      toast.add({
-        type: 'error',
-        title: '❌ Failed to Load',
-        description: 'Could not load your books. Please refresh.',
-      });
-    } finally {
-      setLoading(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Redirect if user is not logged in
+  useEffect(() => {
+    if (!isPending && !user) {
+      router.replace("/login");
     }
-  };
+  }, [isPending, user, router]);
 
-  useEffect(() => { loadBooks(); }, []);
+  // Load logged-in user's books
+  const loadBooks = useCallback(async (signal?: AbortSignal) => {
+    if (!user?.email) return;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure to delete this book?')) return;
     try {
-      const res = await fetch(`http://localhost:8000/delete-book/${id}`, { method: 'DELETE' });
+      setLoading(true);
+
+      const res = await fetch(
+        `${API_URL}/my-books/${encodeURIComponent(user.email)}`,
+        {
+          cache: "no-store",
+          signal,
+        }
+      );
+
       const data = await res.json();
-      if (data.success) {
-        setBooks(prev => prev.filter(b => b._id !== id));
-        // ✅ Delete Toast
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to load books.");
+      }
+
+      setBooks(data.books || []);
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") {
+        console.error("Load Books Error:", error);
+
         toast.add({
-          type: 'success',
-          title: '✅ Book Deleted',
-          description: 'The book has been removed successfully.',
-        });
-      } else {
-        toast.add({
-          type: 'error',
-          title: '❌ Delete Failed',
-          description: data.message || 'Could not delete the book.',
+          type: "error",
+          title: "Failed to Load Books",
+          description: error.message,
         });
       }
-    } catch {
-      toast.add({
-        type: 'error',
-        title: '❌ Delete Failed',
-        description: 'Something went wrong. Try again.',
-      });
+    } finally {
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [user?.email]);
 
+  useEffect(() => {
+    if (isPending || !user?.email) return;
+
+    const controller = new AbortController();
+
+    loadBooks(controller.signal);
+
+    return () => controller.abort();
+  }, [isPending, user?.email, loadBooks]);
+
+  // Start editing
   const startEdit = (book: Book) => {
     setEditingId(book._id);
+
     setEditForm({
       bookTitle: book.bookTitle,
       authorName: book.authorName,
@@ -87,160 +113,399 @@ export default function MyBooksPage() {
     });
   };
 
-  const saveEdit = async () => {
-    if (!editingId) return;
-    try {
-      const res = await fetch(`http://localhost:8000/edit-book/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setBooks(prev => prev.map(b => b._id === editingId ? { ...b, ...data.book } : b));
-        setEditingId(null);
-        // ✅ Save Success Toast
-        toast.add({
-          type: 'success',
-          title: '✅ Book Updated',
-          description: `"${editForm.bookTitle}" has been updated successfully!`,
-        });
-      } else {
-        toast.add({
-          type: 'error',
-          title: '❌ Update Failed',
-          description: data.message || 'Could not save changes.',
-        });
-      }
-    } catch {
-      toast.add({
-        type: 'error',
-        title: '❌ Update Failed',
-        description: 'Something went wrong. Please try again.',
-      });
-    }
-  };
-
+  // Cancel editing
   const cancelEdit = () => {
     setEditingId(null);
     setEditForm({});
   };
 
-  if (loading) return <p className="text-center py-10">Loading your books...</p>;
+  // Handle edit input changes
+  const handleEditChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: name === "totalCopies" ? Number(value) : value,
+    }));
+  };
+
+  // Save edited book
+  const saveEdit = async () => {
+    if (!editingId || isSaving) return;
+
+    // Validate form
+    if (
+      !editForm.bookTitle?.trim() ||
+      !editForm.authorName?.trim() ||
+      !editForm.category ||
+      !editForm.bookImageUrl?.trim() ||
+      !Number.isInteger(editForm.totalCopies) ||
+      editForm.totalCopies! < 1
+    ) {
+      toast.add({
+        type: "error",
+        title: "Invalid Information",
+        description: "Please enter valid book information.",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const updatedData = {
+        bookTitle: editForm.bookTitle.trim(),
+        authorName: editForm.authorName.trim(),
+        category: editForm.category,
+        totalCopies: Number(editForm.totalCopies),
+        bookImageUrl: editForm.bookImageUrl.trim(),
+        shortDescription: editForm.shortDescription?.trim() || "",
+      };
+
+      const res = await fetch(
+        `${API_URL}/edit-book/${editingId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedData),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success || !data.book) {
+        throw new Error(
+          data.message || "Could not update book."
+        );
+      }
+
+      // Update frontend state immediately
+      setBooks((prev) =>
+        prev.map((book) =>
+          book._id === editingId ? data.book : book
+        )
+      );
+
+      toast.add({
+        type: "success",
+        title: "Book Updated Successfully",
+        description: `${data.book.bookTitle} has been updated.`,
+      });
+
+      // Close edit form
+      setEditingId(null);
+      setEditForm({});
+
+    } catch (error) {
+      console.error("Update Book Error:", error);
+
+      toast.add({
+        type: "error",
+        title: "Update Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete book
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this book?"
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(id);
+
+    try {
+      const res = await fetch(
+        `${API_URL}/delete-book/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.message || "Could not delete the book."
+        );
+      }
+
+      setBooks((prev) =>
+        prev.filter((book) => book._id !== id)
+      );
+
+      toast.add({
+        type: "success",
+        title: "Book Deleted",
+        description: "The book has been removed successfully.",
+      });
+    } catch (error) {
+      console.error("Delete Book Error:", error);
+
+      toast.add({
+        type: "error",
+        title: "Delete Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please try again.",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Loading state
+  if (isPending || !user || loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-amber-50">
+        <p className="text-gray-600">Loading your books...</p>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-amber-50 py-10 px-4 container mx-auto">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-serif text-gray-900 mb-6 text-center">My Books</h1>
+    <main className="container mx-auto min-h-screen bg-amber-50 px-4 py-10">
+      <div className="mx-auto max-w-5xl">
 
+        {/* Header */}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="mb-2 text-3xl font-serif text-gray-900">
+              My Books
+            </h1>
+
+            <p className="text-gray-500">
+              Manage the books you have added to BookNook.
+            </p>
+
+            <p className="mt-2 text-sm text-gray-600">
+              Total Books: {books.length}
+            </p>
+          </div>
+
+          <Link
+            href="/add-book"
+            className="rounded bg-[#2f6b52] px-5 py-2.5 font-medium text-white transition hover:bg-[#275c46]"
+          >
+            + Add New Book
+          </Link>
+        </div>
+
+        {/* Empty State */}
         {books.length === 0 ? (
-          <p className="text-center text-gray-500 py-10">
-            You haven&apos;t added any books yet.{' '}
-            <a href="/add-book" className="text-[#2f6b52] underline font-medium">Add your first book</a>
-          </p>
+          <div className="rounded-lg border border-dashed border-gray-300 bg-white px-5 py-16 text-center">
+            <h2 className="text-xl font-semibold text-gray-800">
+              No Books Added Yet
+            </h2>
+
+            <p className="mt-2 text-gray-500">
+              You haven&apos;t added any books yet.
+            </p>
+
+            <Link
+              href="/add-book"
+              className="mt-5 inline-block rounded bg-[#2f6b52] px-5 py-2.5 font-medium text-white hover:bg-[#275c46]"
+            >
+              Add Your First Book
+            </Link>
+          </div>
         ) : (
+
+          /* Book List */
           <div className="space-y-6">
             {books.map((book) => (
-              <div key={book._id} className="bg-white rounded-lg shadow p-5 border">
+              <div
+                key={book._id}
+                className="rounded-lg border bg-white p-5 shadow-sm"
+              >
                 {editingId === book._id ? (
-                  <div className="space-y-3">
+
+                  /* Edit Form */
+                  <div className="space-y-4">
+
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      Edit Book
+                    </h2>
+
                     <input
                       type="text"
-                      value={editForm.bookTitle || ''}
-                      onChange={(e) => setEditForm(p => ({ ...p, bookTitle: e.target.value }))}
-                      className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                      name="bookTitle"
+                      value={editForm.bookTitle || ""}
+                      onChange={handleEditChange}
+                      className="w-full rounded border border-black/10 bg-white px-3 py-2"
                       placeholder="Book Title"
                       required
                     />
+
                     <input
                       type="text"
-                      value={editForm.authorName || ''}
-                      onChange={(e) => setEditForm(p => ({ ...p, authorName: e.target.value }))}
-                      className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                      name="authorName"
+                      value={editForm.authorName || ""}
+                      onChange={handleEditChange}
+                      className="w-full rounded border border-black/10 bg-white px-3 py-2"
                       placeholder="Author Name"
                       required
                     />
+
                     <select
-                      value={editForm.category || 'Fiction'}
-                      onChange={(e) => setEditForm(p => ({ ...p, category: e.target.value }))}
-                      className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                      name="category"
+                      value={editForm.category || "fiction"}
+                      onChange={handleEditChange}
+                      className="w-full rounded border border-black/10 bg-white px-3 py-2"
                     >
-                      <option value="Fiction">Fiction</option>
-                      <option value="Science">Science</option>
-                      <option value="History">History</option>
-                      <option value="Kids">Kids</option>
+                      <option value="fiction">Fiction</option>
+                      <option value="science">Science</option>
+                      <option value="history">History</option>
+                      <option value="kids">Kids</option>
                     </select>
+
                     <input
                       type="number"
-                      value={editForm.totalCopies || 1}
+                      name="totalCopies"
+                      value={editForm.totalCopies ?? 1}
                       min={1}
-                      onChange={(e) => setEditForm(p => ({ ...p, totalCopies: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                      step={1}
+                      onChange={handleEditChange}
+                      className="w-full rounded border border-black/10 bg-white px-3 py-2"
                       placeholder="Total Copies"
+                      required
                     />
+
                     <input
                       type="url"
-                      value={editForm.bookImageUrl || ''}
-                      onChange={(e) => setEditForm(p => ({ ...p, bookImageUrl: e.target.value }))}
-                      className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                      name="bookImageUrl"
+                      value={editForm.bookImageUrl || ""}
+                      onChange={handleEditChange}
+                      className="w-full rounded border border-black/10 bg-white px-3 py-2"
                       placeholder="Book Image URL"
                     />
+
+                    {/* Image Preview */}
+                    {editForm.bookImageUrl && (
+                      <div>
+                        <p className="mb-2 text-sm text-gray-600">
+                          Image Preview
+                        </p>
+
+                        <img
+                          src={editForm.bookImageUrl}
+                          alt="Book cover preview"
+                          className="h-40 w-28 rounded border object-cover"
+                        />
+                      </div>
+                    )}
+
                     <textarea
-                      value={editForm.shortDescription || ''}
-                      onChange={(e) => setEditForm(p => ({ ...p, shortDescription: e.target.value }))}
+                      name="shortDescription"
+                      value={editForm.shortDescription || ""}
+                      onChange={handleEditChange}
                       rows={3}
-                      className="w-full px-3 py-2 border border-black/10 rounded bg-white focus:outline-none focus:ring-1 focus:ring-[#2f6b52]"
+                      className="w-full rounded border border-black/10 bg-white px-3 py-2"
                       placeholder="Short Description"
                     />
-                    <div className="flex gap-3 mt-2">
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-3">
                       <button
+                        type="button"
                         onClick={saveEdit}
-                        className="px-4 py-2 bg-[#2f6b52] hover:bg-[#275c46] text-white rounded transition-colors"
+                        disabled={isSaving}
+                        className="rounded bg-[#2f6b52] px-4 py-2 text-white hover:bg-[#275c46] disabled:cursor-not-allowed disabled:bg-gray-400"
                       >
-                        Save Changes
+                        {isSaving ? "Saving..." : "Save Changes"}
                       </button>
+
                       <button
+                        type="button"
                         onClick={cancelEdit}
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded transition-colors"
+                        disabled={isSaving}
+                        className="rounded bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Cancel
                       </button>
                     </div>
                   </div>
+
                 ) : (
-                  <div className="flex flex-col md:flex-row gap-5">
-                    {book.bookImageUrl && (
-                      <img
-                        src={book.bookImageUrl}
-                        alt={book.bookTitle}
-                        className="w-32 h-44 object-cover rounded shadow-sm shrink-0"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/128x176?text=No+Image';
-                        }}
-                      />
+
+                  /* Book Details */
+                  <div className="flex flex-col gap-5 md:flex-row">
+
+                    {book.bookImageUrl ? (
+                      <div className="relative h-44 w-32 shrink-0 overflow-hidden rounded bg-gray-100">
+                        <Image
+                          src={book.bookImageUrl}
+                          alt={book.bookTitle}
+                          fill
+                          unoptimized
+                          sizes="128px"
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-44 w-32 shrink-0 items-center justify-center rounded bg-gray-100 text-center text-sm text-gray-400">
+                        No Image
+                      </div>
                     )}
+
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-1">{book.bookTitle}</h3>
-                      <p className="text-gray-600 mb-1">✍️ {book.authorName}</p>
-                      <p className="text-sm text-gray-500 mb-1">
-                        <span className="bg-amber-100 px-2 py-0.5 rounded text-xs">{book.category}</span>
-                        {' • '}Copies: {book.totalCopies}
+                      <h2 className="mb-1 text-xl font-semibold text-gray-900">
+                        {book.bookTitle}
+                      </h2>
+
+                      <p className="mb-2 text-gray-600">
+                        Author: {book.authorName}
                       </p>
+
+                      <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="rounded bg-amber-100 px-2 py-1 capitalize text-amber-800">
+                          {book.category}
+                        </span>
+
+                        <span className="text-gray-500">
+                          Copies: {book.totalCopies}
+                        </span>
+                      </div>
+
                       {book.shortDescription && (
-                        <p className="text-gray-700 text-sm mt-2 line-clamp-2">{book.shortDescription}</p>
+                        <p className="line-clamp-3 text-sm text-gray-700">
+                          {book.shortDescription}
+                        </p>
                       )}
-                      <div className="flex gap-3 mt-4">
+
+                      <div className="mt-4 flex flex-wrap gap-3">
                         <button
+                          type="button"
                           onClick={() => startEdit(book)}
-                          className="px-4 py-2 bg-green-400 hover:bg-green-600 text-black rounded transition-colors"
+                          className="rounded bg-green-500 px-4 py-2 text-white transition hover:bg-green-600"
                         >
                           Edit
                         </button>
+
                         <button
+                          type="button"
                           onClick={() => handleDelete(book._id)}
-                          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                          disabled={deletingId === book._id}
+                          className="rounded bg-red-500 px-4 py-2 text-white transition hover:bg-red-600 disabled:bg-gray-400"
                         >
-                          Delete
+                          {deletingId === book._id
+                            ? "Deleting..."
+                            : "Delete"}
                         </button>
                       </div>
                     </div>
@@ -253,4 +518,6 @@ export default function MyBooksPage() {
       </div>
     </main>
   );
-}
+};
+
+export default MyBooksPage;
