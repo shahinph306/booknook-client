@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -61,17 +62,33 @@ export default function LoginForm() {
       });
 
       if (error) {
-        setErrorMessage(error.message || "Invalid email or password");
+        const message = error.message || "Invalid email or password";
+        setErrorMessage(message);
+        toast.add({
+          type: "error",
+          title: "Login Failed!",
+          description: message,
+        });
         return;
       }
 
       if (data) {
+        toast.add({
+          type: "success",
+          title: "Login Successful!",
+          description: "Welcome back! You are now logged in.",
+        });
         router.push("/");
         router.refresh();
       }
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage("Something went wrong. Please try again.");
+      toast.add({
+        type: "error",
+        title: "Login Failed!",
+        description: "Something went wrong. Please try again.",
+      });
     } finally {
       setLoading(false);
     }

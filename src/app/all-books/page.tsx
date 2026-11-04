@@ -1,8 +1,14 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  BookGridSkeleton,
+  PageHeaderSkeleton,
+} from '@/components/skeleton/skeleton';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
 
 type Book = {
   _id: string;
@@ -18,6 +24,7 @@ type Book = {
 const AllBooksContent = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -26,26 +33,33 @@ const AllBooksContent = () => {
           cache: 'no-store',
         });
 
-        if (!res.ok) throw new Error('Failed to fetch books');
+        if (!res.ok) {
+          throw new Error('Failed to fetch books');
+        }
 
         const data = await res.json();
-        console.log('📦 All Books API:', data);
 
-        // ✅ মূল ফিক্স — সঠিকভাবে books অ্যারে বের করছি
+        console.log('All Books API:', data);
+
         let booksList: Book[] = [];
+
         if (data?.success && Array.isArray(data.books)) {
           booksList = data.books;
         } else if (Array.isArray(data)) {
           booksList = data;
-        } else {
-          booksList = [];
-          console.warn('⚠️ Unexpected data format:', data);
         }
 
         setBooks(booksList);
+
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(
+          err instanceof Error ? err.message : 'Unknown error'
+        );
+
         console.error('Fetch error:', err);
+
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -60,9 +74,37 @@ const AllBooksContent = () => {
       : 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
   };
 
+  if (isLoading) {
+  return (
+    <main className="min-h-screen bg-[#f8f5ea] py-12 px-4">
+      <div className="container mx-auto max-w-7xl">
+
+        {/* Page Header */}
+        <div className="text-center mb-10">
+          <PageHeaderSkeleton />
+        </div>
+
+        {/* Books Grid */}
+        <BookGridSkeleton count={6} />
+
+        {/* Loading Spinner */}
+        <div className="flex flex-col items-center justify-center mt-12 py-8 gap-4">
+          <span className="loading loading-spinner loading-lg text-success !w-12 !h-12" />
+
+          <p className="text-base font-semibold text-red-500 animate-pulse">
+            Discovering amazing books...
+          </p>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+
+
   if (error) {
     return (
-      <div className="min-h-screen bg-[#f8f5ea] flex items-center justify-center text-red-600">
+      <div className="min-h-screen bg-green-200 flex items-center justify-center text-red-600">
         Failed to load data — please check if the backend is running
       </div>
     );
@@ -146,21 +188,4 @@ const AllBooksContent = () => {
   );
 };
 
-const AllBooksPage = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#f8f5ea] flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-10 h-10 border-4 border-[#2f6b52] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-gray-600">Loading books...</p>
-          </div>
-        </div>
-      }
-    >
-      <AllBooksContent />
-    </Suspense>
-  );
-};
-
-export default AllBooksPage;
+export default AllBooksContent;

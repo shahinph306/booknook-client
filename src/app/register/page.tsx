@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -93,17 +94,34 @@ export default function RegisterForm() {
 
       if (error) {
         console.error("Registration error:", error);
-        setErrorMessage(error.message || "Registration failed. Please try again.");
+        const message =
+          error.message || "Registration failed. Please try again.";
+        setErrorMessage(message);
+        toast.add({
+          type: "error",
+          title: "Registration Failed!",
+          description: message,
+        });
         return;
       }
 
       if (data) {
+        toast.add({
+          type: "success",
+          title: "Registration Successful!",
+          description: "Your account has been created. Welcome to BookNook!",
+        });
         router.push("/");
         router.refresh();
       }
     } catch (error) {
       console.error("Registration failed:", error);
       setErrorMessage("Something went wrong. Please try again.");
+      toast.add({
+        type: "error",
+        title: "Registration Failed!",
+        description: "Something went wrong. Please try again.",
+      });
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 import {
   Avatar,
@@ -94,12 +95,31 @@ const Navbar = () => {
       closePopover();
       closeMobileMenu();
 
-      await authClient.signOut();
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        throw new Error(result.error.message || "Logout failed.");
+      }
+
+      toast.add({
+        type: "success",
+        title: "Logout Successful!",
+        description: "You have been logged out successfully.",
+      });
 
       router.push("/login");
       router.refresh();
     } catch (error) {
       console.error("Logout failed:", error);
+
+      toast.add({
+        type: "error",
+        title: "Logout Failed!",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
     } finally {
       setLoggingOut(false);
     }
