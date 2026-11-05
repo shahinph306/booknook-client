@@ -1,3 +1,4 @@
+import { BookOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -11,14 +12,10 @@ const Footer = () => {
           {/* Brand Section */}
           <div>
             <Link href="/" className="flex items-center gap-2.5 mb-3">
-              <div className="w-9 h-9 rounded-[10px] bg-[#2f6b52] flex items-center justify-center">
-                <Image
-                              src="/images/bookIcon.png"
-                              alt="BookNook Logo"
-                              width={20}
-                              height={20}
-                            />
-              </div>
+            
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600 text-white shadow-md">
+                          <BookOpen size={25} />
+                        </div>
               <span className="text-xl font-semibold text-gray-900">BookNook</span>
             </Link>
             <p className="text-sm text-gray-500 max-w-xs leading-relaxed">

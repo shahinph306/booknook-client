@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 
@@ -30,6 +30,7 @@ const FALLBACK_IMAGE =
   "https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg";
 
 export default function MyBorrowsPage() {
+  const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
   const [borrows, setBorrows] = useState<BorrowedBook[]>([]);
@@ -37,6 +38,16 @@ export default function MyBorrowsPage() {
   const [returningId, setReturningId] = useState<string | null>(null);
 
   const borrowerEmail = session?.user?.email?.trim().toLowerCase() || "";
+
+  // =====================================
+  // REDIRECT IF NOT LOGGED IN
+  // =====================================
+  useEffect(() => {
+    if (isPending) return;
+    if (!borrowerEmail) {
+      router.replace("/login");
+    }
+  }, [isPending, borrowerEmail, router]);
 
   // =====================================
   // FETCH MY BORROWS
@@ -90,13 +101,7 @@ export default function MyBorrowsPage() {
   // LOAD USER BORROWS
   // =====================================
   useEffect(() => {
-    if (isPending) return;
-
-    if (!borrowerEmail) {
-      setLoading(false);
-      return;
-    }
-
+    if (isPending || !borrowerEmail) return;
     fetchBorrows();
   }, [isPending, borrowerEmail, fetchBorrows]);
 
@@ -126,7 +131,6 @@ export default function MyBorrowsPage() {
         throw new Error(result.message || "Unable to return this book.");
       }
 
-      // Remove book after successful backend response
       setBorrows((previous) =>
         previous.filter((book) => book._id !== item._id)
       );
@@ -136,7 +140,6 @@ export default function MyBorrowsPage() {
         title: "Book Returned Successfully!",
         description: `${item.bookTitle} has been returned.`,
       });
-
     } catch (error) {
       console.error("Return Book Error:", error);
 
@@ -158,13 +161,18 @@ export default function MyBorrowsPage() {
   // =====================================
   const getImageUrl = (item: BorrowedBook) => {
     const url = item.bookImageUrl;
-
     if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
       return url;
     }
-
     return FALLBACK_IMAGE;
   };
+
+  // =====================================
+  // SHOW NOTHING IF NO USER
+  // =====================================
+  if (!isPending && !borrowerEmail) {
+    return null;
+  }
 
   // =====================================
   // AUTH LOADING
@@ -174,14 +182,12 @@ export default function MyBorrowsPage() {
       <main className="min-h-screen bg-amber-50 py-16 px-4">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="h-10 w-56 bg-gray-200 rounded-lg animate-pulse mx-auto" />
-
           {[1, 2, 3].map((item) => (
             <div
               key={item}
               className="bg-white rounded-xl p-5 shadow-sm flex gap-5 animate-pulse"
             >
               <div className="w-24 h-32 bg-gray-200 rounded-lg shrink-0" />
-
               <div className="flex-1 space-y-4 py-2">
                 <div className="h-5 bg-gray-200 rounded w-2/3" />
                 <div className="h-4 bg-gray-200 rounded w-1/3" />
@@ -196,52 +202,20 @@ export default function MyBorrowsPage() {
   }
 
   // =====================================
-  // LOGIN REQUIRED
-  // =====================================
-  if (!borrowerEmail) {
-    return (
-      <main className="min-h-screen bg-amber-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-md p-8 text-center max-w-md w-full">
-          <div className="text-5xl mb-4">🔐</div>
-
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Login Required
-          </h1>
-
-          <p className="text-gray-500 mb-6">
-            Please login to view your borrowed books.
-          </p>
-
-          <Link
-            href="/auth/sign-in"
-            className="inline-block bg-[#2f6b52] text-white px-6 py-3 rounded-lg hover:bg-[#275c46] transition"
-          >
-            Sign In
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  // =====================================
   // MAIN PAGE
   // =====================================
   return (
     <main className="min-h-screen bg-amber-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-
         {/* PAGE HEADER */}
         <div className="text-center mb-10">
           <span className="text-4xl">📚</span>
-
           <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mt-3">
             My Borrows
           </h1>
-
           <p className="text-gray-500 mt-3">
             Manage your borrowed books and return them on time.
           </p>
-
           <p className="text-sm text-gray-500 mt-2">
             {borrowerEmail}
           </p>
@@ -253,12 +227,10 @@ export default function MyBorrowsPage() {
             <p className="text-sm text-gray-500">
               Currently Borrowed
             </p>
-
             <h2 className="text-3xl font-bold text-[#2f6b52]">
               {borrows.length}
             </h2>
           </div>
-
           <button
             onClick={fetchBorrows}
             disabled={loading}
@@ -272,15 +244,12 @@ export default function MyBorrowsPage() {
         {borrows.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16 px-5">
             <div className="text-6xl mb-5">📖</div>
-
             <h2 className="text-2xl font-semibold text-gray-900 mb-3">
               No Borrowed Books
             </h2>
-
             <p className="text-gray-500 mb-7">
               You haven&apos;t borrowed any books yet. Explore our collection!
             </p>
-
             <Link
               href="/all-books"
               className="inline-block bg-[#2f6b52] text-white px-7 py-3 rounded-lg hover:bg-[#275c46] transition"
@@ -323,11 +292,9 @@ export default function MyBorrowsPage() {
                     <h3 className="text-xl font-bold text-gray-900">
                       {item.bookTitle}
                     </h3>
-
                     <p className="text-gray-500 text-sm mt-1">
                       By {item.authorName}
                     </p>
-
                     <div className="mt-5 space-y-2">
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Borrowed:</span>{" "}
@@ -335,14 +302,12 @@ export default function MyBorrowsPage() {
                           ? "N/A"
                           : borrowedDate.toLocaleDateString()}
                       </p>
-
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Return By:</span>{" "}
                         {Number.isNaN(returnDate.getTime())
                           ? "N/A"
                           : returnDate.toLocaleDateString()}
                       </p>
-
                       <span
                         className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${
                           isOverdue
