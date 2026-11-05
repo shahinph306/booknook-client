@@ -1,17 +1,21 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-'use client';
+/* eslint-disable react-hooks/purity */
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { toast } from '@/components/ui/toast';
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 type BorrowedBook = {
   _id: string;
   bookId: string;
   bookTitle: string;
   authorName: string;
-  bookImageUrl: string;
+  bookImageUrl?: string;
   borrowerName: string;
   borrowerEmail: string;
   borrowedAt: string;
@@ -19,86 +23,96 @@ type BorrowedBook = {
   returned?: boolean;
 };
 
-const API_URL = 'http://localhost:8000';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// Keep this consistent with the Book Details page.
-// Replace with the real Better Auth session user when integrating auth.
-const getLoggedInUser = () => ({
-  name: 'Shahin Mahmud',
-  email: 'shahinph306@gmail.com',
-});
+const FALLBACK_IMAGE =
+  "https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg";
 
 export default function MyBorrowsPage() {
+  const { data: session, isPending } = authClient.useSession();
+
   const [borrows, setBorrows] = useState<BorrowedBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [returningId, setReturningId] = useState<string | null>(null);
 
-  const user = getLoggedInUser();
-  const borrowerEmail = user.email.trim().toLowerCase();
+  const borrowerEmail = session?.user?.email?.trim().toLowerCase() || "";
 
-  // Load borrow records from MongoDB
-  const fetchBorrows = async () => {
+  // =====================================
+  // FETCH MY BORROWS
+  // =====================================
+  const fetchBorrows = useCallback(async () => {
+    if (!borrowerEmail) {
+      setBorrows([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      console.log('📤 Loading My Borrows for:', borrowerEmail);
-
       const response = await fetch(`${API_URL}/api/my-borrows`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'X-User-Email': borrowerEmail,
+          "X-User-Email": borrowerEmail,
         },
-        cache: 'no-store',
+        cache: "no-store",
       });
 
       const result = await response.json();
 
-      console.log('📥 My Borrows API response:', result);
-
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Could not load borrowed books.');
+        throw new Error(result.message || "Failed to load borrowed books.");
       }
 
-      const activeBorrows = (result.borrows || []).filter(
-        (item: BorrowedBook) => item.returned !== true
-      );
+      const activeBorrows: BorrowedBook[] = (
+        result.borrows || []
+      ).filter((item: BorrowedBook) => item.returned !== true);
 
       setBorrows(activeBorrows);
-
-      console.log('✅ Active borrow records:', activeBorrows);
     } catch (error) {
-      console.error('❌ My Borrows loading error:', error);
+      console.error("Fetch Borrows Error:", error);
 
       toast.add({
-        type: 'error',
-        title: 'Loading Failed',
+        type: "error",
+        title: "Loading Failed",
         description:
-          error instanceof Error ? error.message : 'Could not load borrows.',
+          error instanceof Error
+            ? error.message
+            : "Could not load borrowed books.",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [borrowerEmail]);
 
+  // =====================================
+  // LOAD USER BORROWS
+  // =====================================
   useEffect(() => {
-    fetchBorrows();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (isPending) return;
 
-  // Return book
+    if (!borrowerEmail) {
+      setLoading(false);
+      return;
+    }
+
+    fetchBorrows();
+  }, [isPending, borrowerEmail, fetchBorrows]);
+
+  // =====================================
+  // RETURN BOOK
+  // =====================================
   const handleReturn = async (item: BorrowedBook) => {
-    if (returningId) return;
+    if (returningId || !borrowerEmail) return;
 
     setReturningId(item._id);
 
-    console.log('📤 Sending return request:', {
-      bookId: item.bookId,
-      borrowerEmail,
-    });
-
     try {
       const response = await fetch(`${API_URL}/return-book`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           bookId: item.bookId,
@@ -108,153 +122,251 @@ export default function MyBorrowsPage() {
 
       const result = await response.json();
 
-      console.log('📥 Return API response:', result);
-
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Unable to return this book.');
+        throw new Error(result.message || "Unable to return this book.");
       }
 
-      // Remove from current page only after backend success
+      // Remove book after successful backend response
       setBorrows((previous) =>
         previous.filter((book) => book._id !== item._id)
       );
 
       toast.add({
-        type: 'success',
-        title: 'Book Returned',
-        description: `${item.bookTitle} has been returned successfully.`,
+        type: "success",
+        title: "Book Returned Successfully!",
+        description: `${item.bookTitle} has been returned.`,
       });
 
-      console.log('✅ Book returned:', item.bookTitle);
     } catch (error) {
-      console.error('❌ Return error:', error);
+      console.error("Return Book Error:", error);
 
       toast.add({
-        type: 'error',
-        title: 'Return Failed',
+        type: "error",
+        title: "Return Failed",
         description:
-          error instanceof Error ? error.message : 'Something went wrong.',
+          error instanceof Error
+            ? error.message
+            : "Something went wrong.",
       });
     } finally {
       setReturningId(null);
     }
   };
 
-  const getImageUrl = (book: BorrowedBook) => {
-    if (book.bookImageUrl?.startsWith('http')) {
-      return book.bookImageUrl;
+  // =====================================
+  // IMAGE FALLBACK
+  // =====================================
+  const getImageUrl = (item: BorrowedBook) => {
+    const url = item.bookImageUrl;
+
+    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+      return url;
     }
 
-    return 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg';
+    return FALLBACK_IMAGE;
   };
 
-  if (loading) {
+  // =====================================
+  // AUTH LOADING
+  // =====================================
+  if (isPending || loading) {
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading your borrows...</p>
-      </div>
+      <main className="min-h-screen bg-amber-50 py-16 px-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="h-10 w-56 bg-gray-200 rounded-lg animate-pulse mx-auto" />
+
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="bg-white rounded-xl p-5 shadow-sm flex gap-5 animate-pulse"
+            >
+              <div className="w-24 h-32 bg-gray-200 rounded-lg shrink-0" />
+
+              <div className="flex-1 space-y-4 py-2">
+                <div className="h-5 bg-gray-200 rounded w-2/3" />
+                <div className="h-4 bg-gray-200 rounded w-1/3" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
+                <div className="h-9 bg-gray-200 rounded w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
     );
   }
 
-  return (
-    <main className="min-h-screen bg-amber-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-serif text-gray-900 mb-6 text-center">
-          My Borrows
-        </h1>
+  // =====================================
+  // LOGIN REQUIRED
+  // =====================================
+  if (!borrowerEmail) {
+    return (
+      <main className="min-h-screen bg-amber-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-md p-8 text-center max-w-md w-full">
+          <div className="text-5xl mb-4">🔐</div>
 
-        <p className="text-sm text-gray-500 text-center mb-6">
-          Borrower: {borrowerEmail}
-        </p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">
+            Login Required
+          </h1>
 
-        <div className="flex justify-end mb-5">
-          <button
-            onClick={() => {
-              setLoading(true);
-              fetchBorrows();
-            }}
-            className="px-4 py-2 rounded bg-[#2f6b52] text-white hover:bg-[#275c46]"
+          <p className="text-gray-500 mb-6">
+            Please login to view your borrowed books.
+          </p>
+
+          <Link
+            href="/auth/sign-in"
+            className="inline-block bg-[#2f6b52] text-white px-6 py-3 rounded-lg hover:bg-[#275c46] transition"
           >
-            Refresh
+            Sign In
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // =====================================
+  // MAIN PAGE
+  // =====================================
+  return (
+    <main className="min-h-screen bg-amber-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+
+        {/* PAGE HEADER */}
+        <div className="text-center mb-10">
+          <span className="text-4xl">📚</span>
+
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mt-3">
+            My Borrows
+          </h1>
+
+          <p className="text-gray-500 mt-3">
+            Manage your borrowed books and return them on time.
+          </p>
+
+          <p className="text-sm text-gray-500 mt-2">
+            {borrowerEmail}
+          </p>
+        </div>
+
+        {/* SUMMARY */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-amber-100 mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500">
+              Currently Borrowed
+            </p>
+
+            <h2 className="text-3xl font-bold text-[#2f6b52]">
+              {borrows.length}
+            </h2>
+          </div>
+
+          <button
+            onClick={fetchBorrows}
+            disabled={loading}
+            className="px-5 py-2.5 rounded-lg bg-[#2f6b52] text-white hover:bg-[#275c46] disabled:opacity-50 transition"
+          >
+            ↻ Refresh
           </button>
         </div>
 
+        {/* EMPTY STATE */}
         {borrows.length === 0 ? (
-          <p className="text-center text-gray-500 py-10">
-            You haven&apos;t borrowed any books yet.{' '}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16 px-5">
+            <div className="text-6xl mb-5">📖</div>
+
+            <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              No Borrowed Books
+            </h2>
+
+            <p className="text-gray-500 mb-7">
+              You haven&apos;t borrowed any books yet. Explore our collection!
+            </p>
+
             <Link
               href="/all-books"
-              className="text-[#2f6b52] underline font-medium"
+              className="inline-block bg-[#2f6b52] text-white px-7 py-3 rounded-lg hover:bg-[#275c46] transition"
             >
               Browse Books
             </Link>
-          </p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          /* BORROWED BOOK LIST */
+          <div className="space-y-5">
             {borrows.map((item) => {
-              const borrowedDate = new Date(
-                item.borrowedAt
-              ).toLocaleDateString();
+              const borrowedDate = new Date(item.borrowedAt);
+              const returnDate = new Date(item.returnBy);
 
-              const returnDate = new Date(
-                item.returnBy
-              ).toLocaleDateString();
+              const isOverdue =
+                !Number.isNaN(returnDate.getTime()) &&
+                returnDate.getTime() < Date.now();
 
-              const isOverdue = new Date(item.returnBy) < new Date();
               const isReturning = returningId === item._id;
 
               return (
                 <div
                   key={item._id}
-                  className="bg-white rounded-lg shadow-sm p-4 border flex flex-col sm:flex-row gap-4"
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col sm:flex-row gap-5 hover:shadow-md transition"
                 >
-                  <div className="w-24 h-36 shrink-0 bg-gray-50 rounded overflow-hidden relative">
+                  {/* BOOK IMAGE */}
+                  <div className="relative w-28 h-40 shrink-0 bg-gray-50 rounded-lg overflow-hidden">
                     <Image
                       src={getImageUrl(item)}
                       alt={item.bookTitle}
                       fill
-                      sizes="96px"
-                      className="object-contain p-1"
+                      sizes="112px"
+                      className="object-contain p-2"
                       unoptimized
                     />
                   </div>
 
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-gray-900">
+                  {/* BOOK INFORMATION */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold text-gray-900">
                       {item.bookTitle}
                     </h3>
 
-                    <p className="text-gray-500 text-sm mb-2">
+                    <p className="text-gray-500 text-sm mt-1">
                       By {item.authorName}
                     </p>
 
-                    <p className="text-xs text-gray-500">
-                      Borrowed: {borrowedDate}
-                    </p>
+                    <div className="mt-5 space-y-2">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Borrowed:</span>{" "}
+                        {Number.isNaN(borrowedDate.getTime())
+                          ? "N/A"
+                          : borrowedDate.toLocaleDateString()}
+                      </p>
 
-                    <p
-                      className={`text-xs mt-1 ${
-                        isOverdue
-                          ? 'text-red-600 font-medium'
-                          : 'text-green-600'
-                      }`}
-                    >
-                      Return by: {returnDate}
-                      {isOverdue && ' (Overdue)'}
-                    </p>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Return By:</span>{" "}
+                        {Number.isNaN(returnDate.getTime())
+                          ? "N/A"
+                          : returnDate.toLocaleDateString()}
+                      </p>
+
+                      <span
+                        className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${
+                          isOverdue
+                            ? "bg-red-100 text-red-600"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {isOverdue ? "Overdue" : "Active Borrow"}
+                      </span>
+                    </div>
                   </div>
 
+                  {/* RETURN BUTTON */}
                   <div className="flex items-center sm:justify-center">
                     <button
                       onClick={() => handleReturn(item)}
                       disabled={returningId !== null}
-                      className={`px-5 py-2.5 rounded-lg text-sm font-medium ${
+                      className={`w-full sm:w-auto px-5 py-3 rounded-lg text-sm font-semibold transition ${
                         isReturning
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-green-500 text-white hover:bg-green-600'
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : "bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
                       }`}
                     >
-                      {isReturning ? 'Returning...' : 'Return Book'}
+                      {isReturning ? "Returning..." : "↩ Return Book"}
                     </button>
                   </div>
                 </div>
