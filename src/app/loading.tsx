@@ -28,7 +28,7 @@ export default function Loading() {
                 
                 <div className="flex flex-col items-center justify-center mt-12 py-8 gap-4">
 
-                    <span className="loading loading-spinner loading-lg text-success !w-12 !h-12" />
+                    <span className="loading loading-spinner loading-lg text-success w-12! h-12!" />
 
                     <p className="text-base font-semibold text-red-500 animate-pulse">
                         Discovering amazing books...

@@ -1,4 +1,394 @@
+
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* =========================================
+   BOOKNOOK - PREMIUM FLOATING LIBRARY
+========================================= */
 
+/* Main Animation Layer */
+.floating-library {
+  position: fixed;
+  top: 120px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 20;
+  isolation: isolate;
+}
+
+/* =========================================
+   3D BOOK BASE
+========================================= */
+
+.library-book {
+  position: absolute;
+  width: 66px;
+  height: 92px;
+  perspective: 700px;
+  transform-style: preserve-3d;
+  opacity: 0.19;
+  filter: drop-shadow(
+    7px 12px 12px rgba(38, 65, 48, 0.16)
+  );
+  animation: bookFloat 20s ease-in-out infinite;
+  will-change: translate, rotate;
+}
+
+.book-pages {
+  position: absolute;
+  width: 92%;
+  height: 94%;
+  top: 3%;
+  left: 7%;
+  background: repeating-linear-gradient(
+    to right,
+    #e8dfc8 0px,
+    #fffdf5 2px,
+    #e6ddc7 3px
+  );
+  border-radius: 2px 5px 5px 2px;
+  transform: translateZ(-3px);
+}
+
+.book-cover {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 3px 7px 7px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transform: rotateY(-12deg);
+  transform-style: preserve-3d;
+  box-shadow: inset 5px 0 5px rgba(0, 0, 0, 0.13);
+}
+
+.book-cover::before {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 3px 0 0 3px;
+}
+
+.book-decoration {
+  color: #e9d7a6;
+  font-size: 15px;
+  margin-bottom: 9px;
+}
+
+.book-line {
+  width: 55%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.55);
+  margin-bottom: 7px;
+}
+
+.book-title {
+  color: #f7ecd0;
+  font-family: Georgia, serif;
+  font-size: 7px;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+/* =========================================
+   DIFFERENT BOOK DESIGNS
+========================================= */
+
+.book-one .book-cover {
+  background: linear-gradient(145deg, #456c55, #244a38);
+}
+
+.book-two .book-cover {
+  background: linear-gradient(145deg, #b88b56, #805a35);
+}
+
+.book-three .book-cover {
+  background: linear-gradient(145deg, #718c82, #3f6255);
+}
+
+.book-four .book-cover {
+  background: linear-gradient(145deg, #a56e5c, #75463e);
+}
+
+.book-five .book-cover {
+  background: linear-gradient(145deg, #7e8060, #50533d);
+}
+
+/* =========================================
+   BOOK POSITIONS
+========================================= */
+
+.book-one {
+  top: 15%;
+  left: 8%;
+  animation-duration: 23s;
+}
+
+.book-two {
+  top: 62%;
+  left: 19%;
+  animation-duration: 27s;
+  animation-delay: -7s;
+}
+
+.book-three {
+  top: 24%;
+  right: 12%;
+  animation-duration: 25s;
+  animation-delay: -12s;
+}
+
+.book-four {
+  bottom: 12%;
+  right: 20%;
+  animation-duration: 22s;
+  animation-delay: -5s;
+}
+
+.book-five {
+  top: 48%;
+  left: 48%;
+  animation-duration: 29s;
+  animation-delay: -15s;
+}
+
+/* =========================================
+   OPEN FLOATING BOOK
+========================================= */
+
+.floating-open-book {
+  position: absolute;
+  top: 43%;
+  right: 38%;
+  width: 95px;
+  height: 55px;
+  opacity: 0.16;
+  transform-style: preserve-3d;
+  animation: openBookFloat 19s ease-in-out infinite;
+  filter: drop-shadow(
+    4px 10px 10px rgba(47, 107, 82, 0.15)
+  );
+}
+
+.open-book-left,
+.open-book-right {
+  position: absolute;
+  top: 4px;
+  width: 48%;
+  height: 85%;
+  background: repeating-linear-gradient(
+    to bottom,
+    #fffdf3 0px,
+    #fffdf3 7px,
+    #e6dfcb 8px,
+    #fffdf3 9px
+  );
+  border: 1px solid #d6cbb3;
+}
+
+.open-book-left {
+  left: 0;
+  border-radius: 9px 2px 2px 4px;
+  transform: skewY(10deg);
+}
+
+.open-book-right {
+  right: 0;
+  border-radius: 2px 9px 4px 2px;
+  transform: skewY(-10deg);
+}
+
+.open-book-spine {
+  position: absolute;
+  top: 4px;
+  left: 48%;
+  width: 4px;
+  height: 85%;
+  background: #a68b62;
+  border-radius: 50%;
+}
+
+/* =========================================
+   FLOATING ANIMATIONS
+========================================= */
+
+@keyframes bookFloat {
+  0%, 100% {
+    translate: 0 0;
+    rotate: -7deg;
+  }
+
+  25% {
+    translate: 15px -20px;
+    rotate: 2deg;
+  }
+
+  50% {
+    translate: -5px -35px;
+    rotate: 8deg;
+  }
+
+  75% {
+    translate: -15px -12px;
+    rotate: -2deg;
+  }
+}
+
+@keyframes openBookFloat {
+  0%, 100% {
+    translate: 0 0;
+    rotate: -8deg;
+  }
+
+  50% {
+    translate: 15px -25px;
+    rotate: 7deg;
+  }
+}
+
+/* =========================================
+   FLOATING PARTICLES
+========================================= */
+
+.library-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #7c9b76;
+  opacity: 0;
+  animation: particleFloat 12s ease-in-out infinite;
+}
+
+.particle-1 {
+  top: 15%;
+  left: 25%;
+}
+
+.particle-2 {
+  top: 30%;
+  left: 75%;
+  animation-delay: -2s;
+}
+
+.particle-3 {
+  top: 70%;
+  left: 12%;
+  animation-delay: -4s;
+}
+
+.particle-4 {
+  top: 80%;
+  left: 60%;
+  animation-delay: -6s;
+}
+
+.particle-5 {
+  top: 45%;
+  left: 90%;
+  animation-delay: -3s;
+}
+
+.particle-6 {
+  top: 10%;
+  left: 55%;
+  animation-delay: -7s;
+}
+
+.particle-7 {
+  top: 60%;
+  left: 35%;
+  animation-delay: -5s;
+}
+
+.particle-8 {
+  top: 90%;
+  left: 85%;
+  animation-delay: -1s;
+}
+
+.particle-9 {
+  top: 25%;
+  left: 45%;
+  animation-delay: -8s;
+}
+
+.particle-10 {
+  top: 50%;
+  left: 5%;
+  animation-delay: -3s;
+}
+
+.particle-11 {
+  top: 75%;
+  left: 75%;
+  animation-delay: -9s;
+}
+
+.particle-12 {
+  top: 5%;
+  left: 90%;
+  animation-delay: -4s;
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.5);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: translateY(-25px) scale(1.2);
+  }
+}
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+========================================= */
+
+@media (max-width: 640px) {
+  .floating-library {
+    top: 80px;
+    height: calc(100vh - 80px);
+  }
+
+  .library-book {
+    opacity: 0.12;
+  }
+
+  .book-two,
+  .book-five,
+  .floating-open-book {
+    display: none;
+  }
+
+  .book-three {
+    right: 5%;
+  }
+
+  .book-four {
+    right: 8%;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .library-book,
+  .floating-open-book,
+  .library-particle {
+    animation: none !important;
+  }
+}

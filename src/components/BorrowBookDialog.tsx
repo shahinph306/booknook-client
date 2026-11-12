@@ -113,7 +113,6 @@ export default function BorrowBookDialog({
 
           <div className="relative z-10 flex flex-col gap-5">
 
-            {/* Header */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <div
@@ -178,10 +177,8 @@ export default function BorrowBookDialog({
               ×
             </Dialog.Close>
 
-            {/* Divider */}
             <div className="h-px bg-linear-to-r from-transparent via-[#c9b77e] to-transparent" />
 
-            {/* Book Preview */}
             <div
               className="
                 relative overflow-hidden
@@ -274,7 +271,7 @@ export default function BorrowBookDialog({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                 {/* User Name */}
-                <div className="space-y-2 rounded-2xl border border-[#d9d3c7] bg-gradient-to-br from-white/95 to-[#f0eee8]/95 p-4 shadow-sm">
+                <div className="space-y-2 rounded-2xl border border-[#d9d3c7] bg-linear-to-br from-white/95 to-[#f0eee8]/95 p-4 shadow-sm">
                   <label
                     htmlFor="borrowerName"
                     className="text-sm font-semibold text-[#625c51]"

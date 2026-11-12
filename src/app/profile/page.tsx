@@ -26,7 +26,7 @@ const UserProfilePage = () => {
 
   useEffect(() => {
     if (!isPending && !session) {
-      router.replace("/login");
+      router.replace("/");
     }
   }, [isPending, session, router]);
 
@@ -69,7 +69,7 @@ const UserProfilePage = () => {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-3 py-5 sm:px-4 sm:py-6 mx-auto max-w-5xl">
-      {/* ✅ ব্যাকগ্রাউন্ড — সঠিকভাবে ফিট করবে, overflow হবে না */}
+      
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -80,7 +80,7 @@ const UserProfilePage = () => {
         }}
       />
       <div className="absolute inset-0 bg-[#fff5e6]/40 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#fff5e6]/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-[#fff5e6]/60 pointer-events-none" />
 
       <div className="relative">
         {/* Header */}
@@ -91,22 +91,22 @@ const UserProfilePage = () => {
           </div>
           <div className="text-right">
             <p className="text-base sm:text-lg font-serif italic text-[#654126]">Read • Borrow • Explore</p>
-            <div className="h-0.5 w-3/4 ml-auto mt-1 rounded-full bg-[#c58b4d] rotate-[-3deg]" />
+            <div className="h-0.5 w-3/4 ml-auto mt-1 rounded-full bg-[#c58b4d] -rotate-3" />
           </div>
         </header>
 
         {/* মূল কার্ড */}
-        <section className="bg-white/75 rounded-[32px] overflow-hidden border border-white/90 shadow-lg backdrop-blur-[8px]">
+        <section className="bg-white/75 rounded-4xl overflow-hidden border border-white/90 shadow-lg backdrop-blur-sm">
           
           {/* উপরের ব্যানার — উচ্চতা কমানো হয়েছে */}
           <div className="relative px-1 pt-1">
             <div
-              className="relative h-[160px] sm:h-[200px] rounded-t-[28px] rounded-b-[24px] overflow-hidden bg-cover bg-center"
+              className="relative h-40 sm:h-50 rounded-t-[28px] rounded-b-3xl overflow-hidden bg-cover bg-center"
               style={{
                 backgroundImage: "url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200&auto=format&fit=crop&q=80')",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/35 to-transparent" />
               <div className="absolute bottom-4 left-5 text-white">
                 <p className="text-xs tracking-widest font-semibold">WELCOME TO</p>
                 <p className="font-serif text-xl sm:text-2xl font-bold">BookNook Library</p>
@@ -115,8 +115,8 @@ const UserProfilePage = () => {
           </div>
 
           {/* প্রোফাইল ছবি — আকার কমানো হয়েছে */}
-          <div className="relative flex justify-center -mt-[85px] sm:-mt-[100px] z-10">
-            <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full p-[5px] bg-white shadow-md">
+          <div className="relative flex justify-center -mt-21.25 sm:-mt-25 z-10">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full p-1.25 bg-white shadow-md">
               <div className="w-full h-full rounded-full border-4 border-[#d8a568] bg-[#f8ead6] flex items-center justify-center overflow-hidden">
                 {user.image ? (
                   <img src={user.image} alt={userName} className="w-full h-full object-cover" />
@@ -132,7 +132,7 @@ const UserProfilePage = () => {
 
           {/* বিস্তারিত */}
           <div className="px-4 sm:px-8 md:px-10 pt-3 pb-8">
-            <h1 className="text-center text-2xl sm:text-4xl font-bold font-serif text-[#452713] break-words">
+            <h1 className="text-center text-2xl sm:text-4xl font-bold font-serif text-[#452713] wrap-break-word">
               {userName}
             </h1>
 
@@ -154,7 +154,7 @@ const UserProfilePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-4 p-4 sm:p-5 rounded-[20px] bg-[#fbf0e1]/85 border border-[#f1dfc8] hover:shadow-md transition-all duration-300">
-                <div className="w-16 h-16 shrink-0 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-sm">
+                <div className="w-16 h-16 shrink-0 rounded-full bg-linear-to-br from-green-500 to-green-700 flex items-center justify-center shadow-sm">
                   <ShieldCheck size={32} className="text-white" />
                 </div>
                 <div>
@@ -164,7 +164,7 @@ const UserProfilePage = () => {
               </div>
 
               <div className="flex items-center gap-4 p-4 sm:p-5 rounded-[20px] bg-[#fbf0e1]/85 border border-[#f1dfc8] hover:shadow-md transition-all duration-300">
-                <div className="w-16 h-16 shrink-0 rounded-full bg-gradient-to-br from-[#87552e] to-[#492a16] flex items-center justify-center shadow-sm">
+                <div className="w-16 h-16 shrink-0 rounded-full bg-linear-to-br from-[#87552e] to-[#492a16] flex items-center justify-center shadow-sm">
                   <Crown size={28} className="text-[#fff1d9]" />
                 </div>
                 <div className="min-w-0">
@@ -177,7 +177,7 @@ const UserProfilePage = () => {
             <button
               onClick={handleLogout}
               disabled={loggingOut}
-              className="group relative mt-7 w-full min-h-[64px] flex items-center justify-center gap-3 rounded-full border-2 border-[#a45b28] bg-gradient-to-r from-[#653a20] via-[#754322] to-[#4b2915] text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+              className="group relative mt-7 w-full min-h-16 flex items-center justify-center gap-3 rounded-full border-2 border-[#a45b28] bg-linear-to-r from-[#653a20] via-[#754322] to-[#4b2915] text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
             >
               {loggingOut ? (
                 <>

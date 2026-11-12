@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 
+
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
-  useEffect,
   useState,
   type FormEvent,
   type ChangeEvent,
@@ -33,14 +33,9 @@ export default function AddBookPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check authentication
-  useEffect(() => {
-    if (!isPending && !user) {
-      router.replace("/login");
-    }
-  }, [isPending, user, router]);
-
-  // Handle input changes
+  // =====================================
+  // HANDLE INPUT CHANGES
+  // =====================================
   const handleChange = (
     e: ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -54,8 +49,12 @@ export default function AddBookPage() {
     }));
   };
 
-  // Submit book
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  // =====================================
+  // SUBMIT BOOK
+  // =====================================
+  const handleSubmit = async (
+    e: FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
 
     if (isLoading) return;
@@ -64,11 +63,12 @@ export default function AddBookPage() {
       toast.add({
         type: "error",
         title: "Login Required",
-        description: "Please log in with your account before adding a book.",
+        description: "Please log in before adding a book.",
       });
       return;
     }
 
+    // Validate required fields
     if (
       !formData.bookTitle.trim() ||
       !formData.authorName.trim() ||
@@ -78,11 +78,12 @@ export default function AddBookPage() {
       toast.add({
         type: "error",
         title: "Required Fields",
-        description: "Please complete all required book information.",
+        description: "Please complete all required fields.",
       });
       return;
     }
 
+    // Validate total copies
     if (
       !Number.isInteger(formData.totalCopies) ||
       formData.totalCopies < 1
@@ -98,44 +99,79 @@ export default function AddBookPage() {
     try {
       setIsLoading(true);
 
-      // IMPORTANT: Include userName and userEmail
-      const bookData = {
-        bookTitle: formData.bookTitle.trim(),
-        authorName: formData.authorName.trim(),
-        category: formData.category,
-        totalCopies: formData.totalCopies,
-        bookImageUrl: formData.bookImageUrl.trim(),
-        shortDescription: formData.shortDescription.trim(),
 
-        userName: user.name,
-        userEmail: user.email.trim().toLowerCase(),
-      };
 
-      console.log("📤 Sending Book Data:", bookData);
+// =====================================
+// STEP 1: GENERATE JWT TOKEN
+// =====================================
 
-      const res = await fetch(`${API_URL}/add-book`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bookData),
-      });
+const { data: tokenData, error: tokenError } =
+  await authClient.token();
 
-      // Safely read server response
-      const contentType = res.headers.get("content-type") || "";
+// console.log("JWT Token Response:", tokenData);
 
-      const data = contentType.includes("application/json")
-        ? await res.json()
-        : null;
+if (tokenError || !tokenData?.token) {
+  throw new Error(
+    tokenError?.message || "JWT token generation failed!"
+  );
+}
 
-      console.log("📥 Backend Response:", data);
+const token = tokenData.token;
 
-      if (!res.ok || !data?.success) {
-        throw new Error(
-          data?.message || `Request failed with status ${res.status}`
-        );
-      }
+console.log("JWT Token Generated:", Boolean(token));
+
+// =====================================
+// STEP 2: PREPARE BOOK DATA
+// =====================================
+
+const bookData = {
+  bookTitle: formData.bookTitle.trim(),
+  authorName: formData.authorName.trim(),
+  category: formData.category,
+  totalCopies: formData.totalCopies,
+  bookImageUrl: formData.bookImageUrl.trim(),
+  shortDescription: formData.shortDescription.trim(),
+
+  userName: user.name,
+  userEmail: user.email.trim().toLowerCase(),
+};
+
+console.log("Sending Book Data:", bookData);
+
+// =====================================
+// STEP 3: SEND JWT TO BACKEND
+// =====================================
+
+const res = await fetch(`${API_URL}/add-book`, {
+  method: "POST",
+
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+
+  body: JSON.stringify(bookData),
+});
+
+// =====================================
+// STEP 4: BACKEND RESPONSE
+// =====================================
+
+const responseData = await res.json();
+
+console.log("Backend Status:", res.status);
+console.log("Backend Response:", responseData);
+
+if (!res.ok || !responseData.success) {
+  throw new Error(
+    responseData.message || "Failed to add book."
+  );
+}
+
+
+      // =====================================
+      // STEP 5: SUCCESS
+      // =====================================
 
       toast.add({
         type: "success",
@@ -154,8 +190,9 @@ export default function AddBookPage() {
 
       router.push("/my-books");
       router.refresh();
+
     } catch (error) {
-      console.error("❌ Frontend Add Book Error:", error);
+      console.error("Add Book Error:", error);
 
       toast.add({
         type: "error",
@@ -170,7 +207,11 @@ export default function AddBookPage() {
     }
   };
 
-  if (isPending || !user) {
+  // =====================================
+  // LOADING
+  // =====================================
+
+  if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-amber-50">
         <p className="text-gray-600">Loading...</p>
@@ -178,10 +219,14 @@ export default function AddBookPage() {
     );
   }
 
+  // =====================================
+  // MAIN FORM
+  // =====================================
+
   return (
     <main className="container mx-auto min-h-screen bg-amber-50 px-4 py-10">
       <div className="mx-auto max-w-2xl">
-        {/* Heading */}
+
         <div className="mb-8 text-center">
           <h1 className="mb-2 font-serif text-3xl text-gray-900">
             Add a Book
@@ -193,8 +238,10 @@ export default function AddBookPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Book Title and Author */}
+
+          {/* Book Title & Author */}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
             <div>
               <label
                 htmlFor="bookTitle"
@@ -211,7 +258,7 @@ export default function AddBookPage() {
                 onChange={handleChange}
                 placeholder="Enter book title"
                 required
-                className="w-full rounded border border-black/10 bg-white px-3 py-2"
+                className="w-full rounded border border-black bg-white px-3 py-2"
               />
             </div>
 
@@ -231,13 +278,15 @@ export default function AddBookPage() {
                 onChange={handleChange}
                 placeholder="Enter author name"
                 required
-                className="w-full rounded border border-black/10 bg-white px-3 py-2"
+                className="w-full rounded border border-black bg-white px-3 py-2"
               />
             </div>
+
           </div>
 
-          {/* Category and Copies */}
+          {/* Category & Copies */}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
             <div>
               <label
                 htmlFor="category"
@@ -251,7 +300,7 @@ export default function AddBookPage() {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full rounded border border-black/10 bg-white px-3 py-2"
+                className="w-full rounded border border-black bg-white px-3 py-2"
               >
                 <option value="fiction">Fiction</option>
                 <option value="science">Science</option>
@@ -277,12 +326,13 @@ export default function AddBookPage() {
                 min={1}
                 step={1}
                 required
-                className="w-full rounded border border-black/10 bg-white px-3 py-2"
+                className="w-full rounded border border-black bg-white px-3 py-2"
               />
             </div>
+
           </div>
 
-          {/* Book Image */}
+          {/* Book Image URL */}
           <div>
             <label
               htmlFor="bookImageUrl"
@@ -299,7 +349,7 @@ export default function AddBookPage() {
               onChange={handleChange}
               placeholder="Paste an image URL"
               required
-              className="w-full rounded border border-black/10 bg-white px-3 py-2"
+              className="w-full rounded border border-black bg-white px-3 py-2"
             />
 
             {formData.bookImageUrl && (
@@ -337,12 +387,13 @@ export default function AddBookPage() {
               rows={3}
               maxLength={1000}
               placeholder="Write a short description..."
-              className="w-full rounded border border-black/10 bg-white px-3 py-2"
+              className="w-full rounded border border-black bg-white px-3 py-2"
             />
           </div>
 
           {/* User Information */}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
             <div>
               <label
                 htmlFor="userName"
@@ -354,9 +405,9 @@ export default function AddBookPage() {
               <input
                 id="userName"
                 type="text"
-                value={user.name || ""}
+                value={user?.name || ""}
                 readOnly
-                className="w-full cursor-not-allowed rounded border border-black/10 bg-gray-100 px-3 py-2"
+                className="w-full cursor-not-allowed rounded border border-black bg-gray-100 px-3 py-2"
               />
             </div>
 
@@ -371,21 +422,23 @@ export default function AddBookPage() {
               <input
                 id="userEmail"
                 type="email"
-                value={user.email || ""}
+                value={user?.email || ""}
                 readOnly
-                className="w-full cursor-not-allowed rounded border border-black/10 bg-gray-100 px-3 py-2"
+                className="w-full cursor-not-allowed rounded border border-black bg-gray-100 px-3 py-2"
               />
             </div>
+
           </div>
 
-          {/* Submit */}
+          {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isPending}
             className="mt-2 w-full rounded bg-[#2f6b52] py-2.5 font-medium text-white transition-colors hover:bg-[#275c46] disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {isLoading ? "Adding Book..." : "Add Book"}
           </button>
+
         </form>
       </div>
     </main>

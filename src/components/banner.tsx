@@ -57,7 +57,6 @@ const BannerSlider = () => {
     emblaApi.on('select', () => setSelectedIndex(emblaApi.selectedScrollSnap()));
   }, [emblaApi]);
 
-  // অটো স্লাইড — প্রতি ৫ সেকেন্ডে পরিবর্তন
   useEffect(() => {
     if (!emblaApi) return;
     const interval = setInterval(() => emblaApi.scrollNext(), 5000);
@@ -78,7 +77,7 @@ const BannerSlider = () => {
                   alt={slide.title}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                {/* Dark Overlay — লেখা স্পষ্ট দেখানোর জন্য */}
+                
                 <div className="absolute inset-0 bg-black/50" />
 
                 {/* Content */}

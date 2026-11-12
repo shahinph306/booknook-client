@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/purity */
 'use client';
@@ -35,7 +35,6 @@ const CategoryBooks = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ ছবির URL ঠিক করার ফাংশন — প্রতিটি বইয়ের জন্য আলাদাভাবে
   const getImageUrl = (book: Book): string => {
     const url = book.bookImageUrl || (book as any).bookImage || '';
 

@@ -18,7 +18,7 @@ type Props = {
   book: Book;
 };
 
-// ✅ একই রকম ছবি না দেখানোর জন্য প্রতিটি কার্ডে আলাদা URL
+
 const getImageUrl = (book: Book): string => {
   const url = book.bookImageUrl || book.bookImage || '';
   
@@ -26,7 +26,6 @@ const getImageUrl = (book: Book): string => {
     return url;
   }
   
-  // ডিফল্ট ছবিকে ইউনিক করুন যাতে ক্যাশ না হয়
   return `https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg?unique=${book._id}-${encodeURIComponent(book.bookTitle || 'book')}`;
 };
 
@@ -43,9 +42,8 @@ const BookCard = ({ book }: Props) => {
             fill
             className="object-contain p-3"
             sizes="(max-width: 768px) 100vw, 33vw"
-            unoptimized // ✅ ডেভেলপমেন্টে ভালো কাজ করবে
+            unoptimized 
             onError={(e) => {
-              // ✅ ভুল লিঙ্ক হলে ডিফল্ট ছবি দেখান
               (e.target as HTMLImageElement).src = 
                 `https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg?fallback=${book._id}`;
             }}

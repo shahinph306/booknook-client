@@ -1,10 +1,12 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 import NavbarPage from "@/components/navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/toast";
-
+import GlobalFloatingBooks from "@/components/animations/GlobalFloatingBooks";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,19 +24,28 @@ export const metadata: Metadata = {
     "Add the books you have finished. Let other readers enjoy them too.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <NavbarPage />
-        <Toaster />
-         
-        {children}
-        <Footer />
-        </body>
+    <body className="min-h-full flex flex-col relative isolate">
+  <GlobalFloatingBooks />
+
+  <div className="relative z-10 min-h-screen flex flex-col">
+    <NavbarPage />
+    <Toaster />
+
+    <main className="flex-1">
+      {children}
+    </main>
+
+    <Footer />
+  </div>
+</body>
     </html>
   );
 }

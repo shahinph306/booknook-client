@@ -148,7 +148,7 @@ export default function RegisterForm() {
         <CardHeader className="text-center pt-8 pb-5">
 
           {/* Logo Icon */}
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-700 to-green-500 text-white shadow-lg shadow-emerald-200">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-700 to-green-500 text-white shadow-lg shadow-emerald-200">
             <User size={32} />
           </div>
 
@@ -346,7 +346,7 @@ export default function RegisterForm() {
             <Button
               type="submit"
               disabled={!accepted || loading}
-              className="h-12 w-full rounded-xl bg-gradient-to-r from-emerald-700 to-green-600 text-white font-semibold shadow-lg shadow-emerald-200 hover:from-emerald-800 hover:to-green-700 hover:shadow-emerald-300 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              className="h-12 w-full rounded-xl bg-linear-to-r from-emerald-700 to-green-600 text-white font-semibold shadow-lg shadow-emerald-200 hover:from-emerald-800 hover:to-green-700 hover:shadow-emerald-300 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {loading ? "Creating Account..." : "Create Account"}
