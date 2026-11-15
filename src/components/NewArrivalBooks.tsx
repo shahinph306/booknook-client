@@ -26,7 +26,7 @@ export default function NewArrivalBooks() {
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:8000/all-books', { cache: 'no-store' });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-books`, { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch books');
         
         const data = await res.json();

@@ -147,7 +147,7 @@ export default function RegisterForm() {
 
         <CardHeader className="text-center pt-8 pb-5">
 
-          {/* Logo Icon */}
+         
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-700 to-green-500 text-white shadow-lg shadow-emerald-200">
             <User size={32} />
           </div>

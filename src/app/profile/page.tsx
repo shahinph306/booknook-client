@@ -95,10 +95,9 @@ const UserProfilePage = () => {
           </div>
         </header>
 
-        {/* মূল কার্ড */}
+    
         <section className="bg-white/75 rounded-4xl overflow-hidden border border-white/90 shadow-lg backdrop-blur-sm">
           
-          {/* উপরের ব্যানার — উচ্চতা কমানো হয়েছে */}
           <div className="relative px-1 pt-1">
             <div
               className="relative h-40 sm:h-50 rounded-t-[28px] rounded-b-3xl overflow-hidden bg-cover bg-center"
@@ -114,7 +113,7 @@ const UserProfilePage = () => {
             </div>
           </div>
 
-          {/* প্রোফাইল ছবি — আকার কমানো হয়েছে */}
+         
           <div className="relative flex justify-center -mt-21.25 sm:-mt-25 z-10">
             <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full p-1.25 bg-white shadow-md">
               <div className="w-full h-full rounded-full border-4 border-[#d8a568] bg-[#f8ead6] flex items-center justify-center overflow-hidden">
@@ -130,7 +129,7 @@ const UserProfilePage = () => {
             </div>
           </div>
 
-          {/* বিস্তারিত */}
+         
           <div className="px-4 sm:px-8 md:px-10 pt-3 pb-8">
             <h1 className="text-center text-2xl sm:text-4xl font-bold font-serif text-[#452713] wrap-break-word">
               {userName}

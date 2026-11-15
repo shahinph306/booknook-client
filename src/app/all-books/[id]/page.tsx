@@ -33,7 +33,7 @@ type BorrowRecord = {
   returned?: boolean;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const FALLBACK_IMAGE = "https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg";
 
 export default function BookDetailsPage() {

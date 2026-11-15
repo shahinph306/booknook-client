@@ -173,12 +173,11 @@ export default function LoginForm() {
                     Password
                   </FieldLabel>
 
-                  <Link
-                    href="/forgot-password"
+                  <Button
                     className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 hover:underline transition-colors"
                   >
                     Forgot Password?
-                  </Link>
+                  </Button>
                 </div>
 
                 <div className="relative group">

@@ -14,7 +14,7 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL;
 
 export default function AddBookPage() {
   const router = useRouter();
